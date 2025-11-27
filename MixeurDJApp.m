@@ -56,7 +56,7 @@ classdef MixeurDJApp < matlab.apps.AppBase
                 struct('name','Flanger','description','Jet d''avion','fn',@(sig,Fs) Flanger(sig,Fs))
                 struct('name','Phaser','description','Balayage de phase','fn',@(sig,Fs) Phaser(sig,Fs,0.5,0.8))
                 struct('name','Bruit blanc','description','Ajout de bruit blanc','fn',@(sig,Fs) Bruit_blanc(sig,Fs))
-                struct('name','Transforme vers ma voie','description','Approche timbre cible','fn',@(sig,Fs) transforme_vers_ma_voie(sig,Fs,'Evil_laugh_elise.wav'))
+                struct('name','Transforme vers ma voix','description','Approche timbre cible','fn',@(sig,Fs) Transforme_vers_ma_voix(sig,Fs,'Evil_laugh_elise.wav'))
                 struct('name','Granularize','description','Texture granulaire','fn',@(sig,Fs) Granularize(sig,Fs))
                 struct('name','Overdrive','description','Saturation douce','fn',@(sig,Fs) Overdrive(sig,Fs))
                 struct('name','Distort hard','description','Distorsion dure','fn',@(sig,Fs) Distort_hard(sig,Fs))
