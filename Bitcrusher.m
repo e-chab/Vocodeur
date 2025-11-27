@@ -1,9 +1,9 @@
-function y = Lo_fi(x, bits)
-% Effet Lo-fi (bitcrusher) : réduit la résolution du signal
+function y = Bitcrusher(x, Fs, bits)
+% Effet bitcrusher : réduit la résolution du signal
 % x : signal d'entrée
 % bits : nombre de bits de résolution (ex : 4, 8)
 
-if nargin < 2, bits = 8; end
+if nargin < 3, bits = 4; end
 x = x(:);
 
 % Normalisation du signal entre -1 et 1

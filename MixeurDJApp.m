@@ -55,12 +55,14 @@ classdef MixeurDJApp < matlab.apps.AppBase
                 struct('name','Vibrato','description','Modulation pitch subtile','fn',@(sig,Fs) Vibrato(sig,Fs,6,0.003))
                 struct('name','Flanger','description','Jet d''avion','fn',@(sig,Fs) Flanger(sig,Fs))
                 struct('name','Phaser','description','Balayage de phase','fn',@(sig,Fs) Phaser(sig,Fs,0.5,0.8))
+                struct('name','Bruit blanc','description','Ajout de bruit blanc','fn',@(sig,Fs) Bruit_blanc(sig,Fs))
+                struct('name','Transforme vers ma voie','description','Approche timbre cible','fn',@(sig,Fs) transforme_vers_ma_voie(sig,Fs,'Evil_laugh_elise.wav'))
                 struct('name','Granularize','description','Texture granulaire','fn',@(sig,Fs) Granularize(sig,Fs))
                 struct('name','Overdrive','description','Saturation douce','fn',@(sig,Fs) Overdrive(sig,Fs))
-                struct('name','Hard Clip','description','Distorsion dure','fn',@(sig,Fs) Distort_hard_clipping(sig,6,0.35))
-                struct('name','Soft Clip','description','Distorsion douce','fn',@(sig,Fs) Distort_soft_clipping(sig,Fs))
+                struct('name','Distort hard','description','Distorsion dure','fn',@(sig,Fs) Distort_hard(sig,Fs))
+                struct('name','Distort soft','description','Distorsion douce','fn',@(sig,Fs) Distort_soft(sig,Fs))
                 struct('name','Stereo Move','description','Balayage gauche-droite','fn',@(sig,Fs) Stereo_mov(sig,Fs))
-                struct('name','Lo-fi','description','Bitcrusher','fn',@(sig,Fs) Lo_fi(sig,6))
+                struct('name','Bitcrusher','description','Bitcrusher','fn',@(sig,Fs) Bitcrusher(sig,6))
                 struct('name','Wah-Wah','description','Filtre wah classique','fn',@(sig,Fs) Wah_wah(sig,Fs,1500,1800,700))
             ];
         end

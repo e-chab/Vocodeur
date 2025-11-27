@@ -1,5 +1,4 @@
-function y = transforme_vers_ma_voie(x, Fs, cible_file)
-% y = transforme_vers_ma_voie(x, Fs, cible_file)
+function y = Transforme_vers_ma_voie(x, Fs, cible_file)
 % Transforme la voix d'entrée x pour qu'elle ressemble à la voix cible (ex: Evil_laugh_elise.wav)
 % x : signal à transformer
 % Fs : fréquence d'échantillonnage
@@ -25,20 +24,35 @@ pitch_source = estimate_pitch(x, Fs);
 facteur = pitch_cible / pitch_source;
 
 % 3. Pitch shifting
-Nfft = 1024;
-Nwind = 1024;
-x_shifted = PVoc(x, facteur, Nfft, Nwind);
+x_shifted = PVoc(x, facteur);
 if length(x_shifted) ~= length(x)
     % Interpolation linéaire pour ajuster la durée
     x_shifted = interp1(linspace(0,1,length(x_shifted)), x_shifted, linspace(0,1,length(x)), 'linear');
 end
 
 % 4. Estimation des formants principaux de la voix cible
+% Calcul du spectre de la voix cible
 [S,F] = periodogram(cible,[],[],Fs);
-[~,formant_idx] = findpeaks(S,'NPeaks',3,'SortStr','descend');
-formant_freqs = F(formant_idx);
+% Recherche des pics du spectre
+[pks, locs] = findpeaks(S, 'SortStr', 'descend');
+formant_freqs = [];
+min_formant_freq = 600; % Seuil minimum pour un formant
+min_spacing = 450;      % Espacement minimum entre formants (Hz)
+for i = 1:length(locs)
+    freq_candidate = F(locs(i));
+    % On ne prend que les fréquences > 500 Hz et suffisamment espacées des formants déjà choisis
+    if freq_candidate > min_formant_freq
+        if isempty(formant_freqs) || all(abs(formant_freqs - freq_candidate) > min_spacing)
+            formant_freqs(end+1) = freq_candidate; %#ok<AGROW>
+        end
+    end
+    if length(formant_freqs) == 3
+        break;
+    end
+end
 if length(formant_freqs) < 3
-    formant_freqs = [500 1500 2500]; % Valeurs par défaut si estimation échoue
+    % Valeurs par défaut si estimation échoue
+    formant_freqs = [700 1200 2500];
 end
 
 % 5. Filtrage passe-bande autour des formants principaux

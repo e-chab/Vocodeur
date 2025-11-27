@@ -1,9 +1,13 @@
-function y = Phaser(x, Fs, rate, depth)
+function y = phaser(x, Fs, rate, depth)
 % Effet phaser : balayage de phase sur le signal
 % x : signal d'entrée
 % Fs : fréquence d'échantillonnage
 % rate : fréquence de modulation (Hz)
 % depth : profondeur de l'effet (0 à 1)
+
+
+if nargin < 3, rate = 0.5; end % Fréquence de modulation par défaut (Hz)
+if nargin < 4, depth = 0.7; end % Profondeur par défaut (0 à 1)
 
 if size(x,2) > 1
     x = mean(x,2); % Convertir en mono si nécessaire
