@@ -69,13 +69,17 @@ classdef MixeurDJApp < matlab.apps.AppBase
 
         function initFileList(app)
             scriptDir = fileparts(mfilename('fullpath'));
-            defaults = {'Extrait.wav','Diner.wav','Halleluia.wav'};
             entries = struct('label',{},'path',{});
-            for k = 1:numel(defaults)
-                candidate = fullfile(scriptDir, defaults{k});
-                if exist(candidate,'file') == 2
-                    entries(end+1) = struct('label',defaults{k},'path',candidate); %#ok<AGROW>
-                end
+            wavFiles = dir(fullfile(scriptDir, '*.wav'));
+            for k = 1:numel(wavFiles)
+                file = wavFiles(k);
+                entries(end+1) = struct('label',file.name,'path',fullfile(scriptDir,file.name)); %#ok<AGROW>
+            end
+            % Si aucun fichier trouvé dans le dossier du script, ne pas planter
+            if isempty(entries)
+                app.FileListBox.Items = {'<vide>'};
+                app.FileListBox.ItemsData = 0;
+                app.FileListBox.Value = 0;
             end
             app.fileEntries = entries;
             refreshFileList(app, 1);
