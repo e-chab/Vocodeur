@@ -1,0 +1,1241 @@
+% ============================================================================
+% TEMPLATE LATEX - RAPPORT VOCODEUR DE PHASE
+% Projet OBL-4101 - ESIEE Paris
+% ============================================================================
+
+\documentclass[12pt, a4paper, oneside, french]{report}
+
+% ============================================================================
+% PACKAGES ESSENTIELS
+% ============================================================================
+
+\usepackage[T1]{fontenc}
+\usepackage[french]{babel}
+
+% Géométrie et marges
+\usepackage[margin=2.5cm, top=3cm, bottom=3cm]{geometry}
+
+% Typographie améliorée
+\usepackage{lmodern}
+\usepackage[protrusion=true, expansion=true]{microtype}
+
+% Math et symboles
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{mathtools}
+\usepackage{physics}
+
+% Figures et graphiques
+\usepackage{graphicx}
+\usepackage{subfig}
+\usepackage{float}
+\usepackage{caption}
+\captionsetup{font=small, labelfont=bf}
+
+% Tableaux avancés
+\usepackage{booktabs}
+\usepackage{tabularx}
+\usepackage{multirow}
+\usepackage{colortbl}
+
+% Couleurs
+\usepackage{xcolor}
+\definecolor{darkblue}{HTML}{1F4788}
+\definecolor{lightblue}{HTML}{E8F0F7}
+\definecolor{darkgreen}{HTML}{2E7D32}
+\definecolor{lightgreen}{HTML}{E8F5E9}
+\definecolor{darkred}{HTML}{C62828}
+\definecolor{lightred}{HTML}{FFEBEE}
+
+% En-têtes et pieds de page
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\textit{\nouppercase{\rightmark}}}
+\fancyhead[R]{\thepage}
+\fancyfoot[C]{\small ESIEE Paris - OBL-4101}
+\renewcommand{\headrulewidth}{0.4pt}
+\renewcommand{\footrulewidth}{0.4pt}
+
+% Table des matières
+\usepackage[hidelinks]{hyperref}
+\hypersetup{
+    colorlinks=true,
+    linkcolor=darkblue,
+    citecolor=darkblue,
+    filecolor=darkblue,
+    urlcolor=darkblue,
+    pdftitle={Vocodeur de Phase - Projet OBL-4101},
+    pdfauthor={Étudiants ESIEE},
+    pdfsubject={Traitement du signal audio}
+}
+
+% (On garde listings pour d'éventuels pseudo-codes, mais SANS mettre de code MATLAB)
+\usepackage{listings}
+\lstset{
+    basicstyle=\ttfamily\small,
+    breaklines=true,
+    columns=fullflexible,
+    commentstyle=\itshape\color{gray},
+    keywordstyle=\bfseries\color{darkblue},
+    stringstyle=\color{darkgreen},
+    showstringspaces=false,
+    frame=single,
+    framexrightmargin=5mm,
+    framextopmargin=3mm,
+    framexbottommargin=3mm,
+    rulecolor=\color{lightblue},
+    backgroundcolor=\color{lightblue},
+    captionpos=b,
+    numbers=left,
+    numberstyle=\small\color{gray},
+    xleftmargin=15pt,
+    xrightmargin=5pt
+}
+
+% Boîtes personnalisées
+\usepackage{tcolorbox}
+\tcbuselibrary{most}
+
+\newtcolorbox{infobox}[1][]{
+    colback=lightblue,
+    colframe=darkblue,
+    boxrule=1pt,
+    title={#1},
+    titlerule=0.5pt,
+    arc=3pt,
+    left=5pt,
+    right=5pt,
+    top=5pt,
+    bottom=5pt
+}
+
+\newtcolorbox{warnbox}[1][]{
+    colback=lightred,
+    colframe=darkred,
+    boxrule=1pt,
+    title={#1},
+    titlerule=0.5pt,
+    arc=3pt,
+    left=5pt,
+    right=5pt,
+    top=5pt,
+    bottom=5pt
+}
+
+% Formatage des sections
+\usepackage{titlesec}
+\titleformat{\chapter}[display]
+{\Large\bfseries\color{darkblue}}
+{\chaptertitlename\ \thechapter}{20pt}{\Large}
+[\titlerule]
+
+\titleformat{\section}
+{\large\bfseries\color{darkblue}}
+{\thesection}{1em}{}
+
+\titleformat{\subsection}
+{\normalsize\bfseries\color{darkgreen}}
+{\thesubsection}{1em}{}
+
+% Espacement des lignes
+\usepackage{setspace}
+\onehalfspacing
+
+% Listes améliorées
+\usepackage{enumitem}
+\setlist[itemize]{leftmargin=1.5cm, itemsep=3pt}
+\setlist[enumerate]{leftmargin=1.5cm, itemsep=3pt}
+
+% PDF bookmarks et navigation
+\usepackage{bookmark}
+\bookmarksetup{open, numbered}
+
+% ============================================================================
+% DOCUMENT
+% ============================================================================
+
+\begin{document}
+
+% ============================================================================
+% PAGE DE TITRE
+% ============================================================================
+
+\thispagestyle{empty}
+
+\begin{center}
+    \vspace*{1cm}
+    
+
+    {\Large \textbf{ESIEE PARIS}}\\
+    {\Large \textbf{E4 DSIA}}\\
+    
+    \vspace{0.3cm}
+    {\normalsize Cours : OBL-4101 - Traitement du Signal Audio}\\
+    
+    \vspace{3cm}
+    
+    {\Huge \bfseries \color{darkblue}
+    Projet Final: Traitement du signal\\
+    \vspace{0.5cm}
+    Vocodeur de Phase
+    }
+    
+    \vspace{0.5cm}
+    
+    {\large \textit{Implémentation MATLAB – 3 effets principaux et 22 effets supplémentaires}}
+    
+    \vspace{3cm}
+    
+    % Auteurs
+    {\large \bfseries Auteurs}\\
+    \vspace{0.3cm}
+    {\normalsize
+    [Elise CHABRERIE]\\
+    [Yoan ROUL]\\
+
+    
+    \vspace{2cm}
+    
+    % Encadrant
+    {\large \bfseries Responsable de l'unité}\\
+    \vspace{0.3cm}
+    {\normalsize [Amadou ASSOUMANE]}
+    
+    \vspace{3cm}
+    
+    % Date
+    {\large \bfseries Date de remise}\\
+    \vspace{0.3cm}
+    {\normalsize 27 novembre 2025}
+    
+    \vfill
+    
+    % Résumé sur page de titre
+    \begin{tcolorbox}[colback=lightgreen, colframe=darkgreen, arc=3pt]
+    {\small \textbf{Résumé} : Ce projet met en \oe uvre un vocodeur de phase numérique en MATLAB. Trois effets fondamentaux sont réalisés : modification de la vitesse sans changement de hauteur, modification de la hauteur (pitch) sans changement de vitesse, et robotisation de la voix. 22 effets supplémentaires basés sur le vocodeur viennent illustrer l'appropriation du projet. Le rapport détaille la théorie, les algorithmes, ainsi que les résultats obtenus sur des fichiers audio fournis et sur notre propre voix.}
+    \end{tcolorbox}
+    
+\end{center}
+
+\newpage
+
+
+% ============================================================================
+% TABLE DES MATIÈRES
+% ============================================================================
+
+\tableofcontents
+\newpage
+
+% ============================================================================
+% INTRODUCTION GÉNÉRALE
+% ============================================================================
+
+\chapter{Introduction Générale}
+
+Pour les lecteurs moins familiers avec le traitement du signal, cette introduction sert à expliquer en langage courant pourquoi un vocodeur est un outil important : il permet de modifier ou transformer une voix enregistrée tout en préservant son intelligibilité. Nous replacerons chaque idée technique dans un contexte concret (transmission téléphonique, effets musicaux, accessibilité) afin que chacun puisse suivre le fil du projet sans bagage mathématique particulier.
+
+\section{Historique du vocodeur}
+
+Un vocodeur (contraction de \textit{``voice coder''}) est un outil de traitement permettant de coder et transformer des signaux audio, notamment la voix. Le terme ``coding'' se réfère ici à l'analyse, la manipulation et la synthèse du signal, plutôt qu'à la simple compression de données.
+
+\subsection{Origines (1939)}
+
+Le vocodeur a été inventé par Homer Dudley, ingénieur aux laboratoires Bell. Son objectif initial était d'assurer une transmission efficace de la voix sur le réseau téléphonique longue distance en analysant et synthétisant les composantes du signal vocal.
+
+\begin{infobox}[Point clé]
+La première démonstration du ``Voder'' (Voice Operating Demonstrator) à l'Exposition universelle de New York (1939-1940) a révolutionné le domaine, bien que la voix produite soit très robotique.
+\end{infobox}
+
+\subsection{Applications militaires et téléphoniques}
+
+Le système SIGSALY a permis à Franklin Roosevelt et Winston Churchill de communiquer de manière confidentielle durant la Seconde Guerre mondiale, en réduisant fortement la bande passante utile de la voix (3000 Hz à environ 150 Hz).
+
+\subsection{Adoption artistique (1970s–2000s)}
+
+\begin{itemize}
+    \item \textbf{Années 1970} : utilisation créative en musique électronique (Kraftwerk, etc.) ;
+    \item \textbf{Années 1980} : passage progressif au numérique et à l'informatique ;
+    \item \textbf{Années 2000} : implémentations temps réel du phase vocoder.
+\end{itemize}
+
+\section{Applications modernes}
+
+Les techniques de vocodage de phase sont omniprésentes dans l'industrie audio actuelle :
+
+\begin{description}
+    \item[Streaming vidéo] Time-stretching pour adapter la vitesse de lecture (YouTube, plateformes d'e-learning, etc.) ;
+    \item[Musique numérique] Correction de tempo, mashups, remix, transitions DJ ;
+    \item[Studios d'enregistrement] Correction de pitch (Auto-Tune), harmonisation, effets créatifs ;
+    \item[Jeux vidéo et cinéma] Transformation vocale de personnages (robots, aliens, monstres) ;
+    \item[Accessibilité] Accélération/ralentissement de la parole pour malvoyants ou malentendants.
+\end{description}
+
+\section{Objectifs du projet}
+
+L'objectif de ce projet est de réaliser une \textbf{implémentation pédagogique d'un vocodeur de phase} en MATLAB, répondant au cahier des charges suivant :
+
+\begin{enumerate}
+    \item Implémenter les trois effets fondamentaux demandés :
+    \begin{itemize}
+        \item modification de la vitesse sans modification de la hauteur ;
+        \item modification de la hauteur sans modification de la vitesse ;
+        \item robotisation d'une voix.
+    \end{itemize}
+    \item Proposer au moins deux effets supplémentaires basés sur le vocodeur, illustrant notre appropriation du sujet.
+    \item Tester les effets sur les fichiers audio fournis (parole, chant) ainsi que sur un enregistrement de notre propre voix.
+    \item Analyser et commenter les résultats obtenus dans les domaines temporel, fréquentiel et temps–fréquence (spectrogrammes).
+\end{enumerate}
+
+\section{Vue d'ensemble des effets implémentés}
+
+Le projet met en \oe uvre trois effets principaux et vingt-deux effets supplémentaires (pilotables dans \texttt{Vocodeur.m} ou \texttt{MixeurDJApp}), résumés dans le Tableau~\ref{tab:effets_synthese}.
+
+\begin{table}[H]
+\centering
+\caption{Synthèse des effets implémentés}
+\label{tab:effets_synthese}
+\begin{tabularx}{\textwidth}{|c|l|l|X|}
+\hline
+\textbf{\#} & \textbf{Effet} & \textbf{Type} & \textbf{Principe et paramètres principaux} \\
+\hline
+1 & Speed & Time-stretching & Modification de la base de temps via vocodeur de phase (facteur de vitesse $\text{rapp}$). \\
+\hline
+2 & Pitch & Pitch-shifting & Time-stretching par vocodeur puis ré-échantillonnage (facteur de pitch $a/b$). \\
+\hline
+3 & Robotisation & Modulation & Modulation par une porteuse complexe de fréquence $f_c$ puis prise de la partie réelle. \\
+\hline
+4 & Banque d'effets supplémentaires & Créatifs (22) & Auto-wah, Acapella, Autotune, Bitcrusher, Bruit blanc, Chorus/Echo, Flanger, Fuzz, Granularize, Hard/Soft clip, Lo-fi, Overdrive, Phaser, Reverbs, Ring Mod, Stereo Move, Tremolo, Transforme ma voix, Vibrato, Wah-Wah, Harmonizer, Voix ``alien''. \\
+\hline
+\end{tabularx}
+\end{table}
+
+% ============================================================================
+% THÉORIE FONDAMENTALE
+% ============================================================================
+
+\chapter{Théorie Fondamentale}
+
+Cette partie peut sembler très mathématique; nous prenons donc soin d'indiquer à chaque fois ce que signifie la formule dans la vie réelle. Quand nous parlons de transformée de Fourier, pensez simplement à une décomposition du son en ``ingrédients'' graves et aigus. Les explications qui suivent relient systématiquement l'équation à une intuition concrète (par exemple : ``cette somme mesure la quantité de graves''), ce qui permet aux non-spécialistes de garder un repère.
+
+\section{Analyse spectrale et transformée de Fourier}
+
+\subsection{Transformée de Fourier discrète}
+
+La \textbf{Transformée de Fourier Discrète} (TFD) décompose un signal numérique en ses composantes fréquentielles :
+
+\begin{equation}
+X[k] = \sum_{n=0}^{N-1} x[n] \, e^{-j2\pi kn/N}
+\end{equation}
+
+où :
+\begin{itemize}
+    \item $x[n]$ : échantillons du signal dans le domaine temporel ;
+    \item $X[k]$ : coefficients complexes dans le domaine fréquentiel ;
+    \item $N$ : nombre total d'échantillons.
+\end{itemize}
+
+\subsection{Représentation amplitude–phase}
+
+Chaque coefficient $X[k]$ peut être écrit sous forme polaire :
+
+\begin{equation}
+X[k] = |X[k]| e^{j\phi[k]}
+\end{equation}
+
+avec :
+\begin{itemize}
+    \item $|X[k]|$ : magnitude (contenu spectral en amplitude) ;
+    \item $\phi[k]$ : phase associée.
+\end{itemize}
+
+\begin{infobox}[Rôle de la phase]
+En traitement audio, la phase joue un rôle crucial : elle contient des informations de localisation temporelle fines. Le vocodeur de phase s'appuie précisément sur la manipulation cohérente de cette phase pour modifier la durée sans dégrader excessivement la qualité sonore.
+\end{infobox}
+
+\section{Transformée de Fourier à court terme (TFCT)}
+
+\subsection{Stationnarité locale}
+
+Un signal de parole n'est pas stationnaire sur toute sa durée. On suppose en revanche qu'il est \textit{quasi-stationnaire} sur des fenêtres de l'ordre de 20--30 ms. C'est le principe de la TFCT (STFT).
+
+\subsection{Formulation}
+
+Pour chaque trame centrée autour de l'instant $t_a$, on calcule :
+
+\begin{equation}
+X(t_a, \nu_p) = \sum_{n=0}^{N-1} x[n + t_a] \, w[n] \, e^{-j2\pi \nu_p n}
+\end{equation}
+
+où $w[n]$ est la fenêtre (ici Hanning) et $\nu_p = p/N$ la fréquence normalisée.
+
+La TFCT fournit une matrice $X$ dont :
+\begin{itemize}
+    \item chaque \textbf{colonne} correspond à une trame temporelle ;
+    \item chaque \textbf{ligne} correspond à une fréquence.
+\end{itemize}
+
+\section{Fenêtrage et recouvrement}
+
+\subsection{Fenêtre de Hanning}
+
+La fenêtre de Hanning est définie par :
+
+\begin{equation}
+h(n) = \frac{1}{2} \left[1 - \cos\left(\frac{2\pi n}{N-1}\right)\right], \quad 0 \leq n \leq N-1
+\end{equation}
+
+Elle permet de réduire les discontinuités aux bords des trames et donc les fuites spectrales.
+
+\subsection{Recouvrement et synthèse}
+
+Les trames se recouvrent (par exemple à 75\%) et la synthèse se fait par \textit{overlap-add} : les trames temporelles reconstruites sont sommées aux bons instants avec la même fenêtre, ce qui permet de reconstituer le signal complet.
+
+\section{Principe général du vocodeur de phase}
+
+Le phase vocoder repose sur trois étapes :
+
+\begin{enumerate}
+    \item \textbf{Analyse} : TFCT du signal d'entrée ;
+    \item \textbf{Modification} : interpolation temporelle des colonnes de $X$ (module) et correction de la phase ;
+    \item \textbf{Synthèse} : TFCT inverse (IFFT + overlap-add) pour reconstruire un nouveau signal.
+\end{enumerate}
+
+La fonction \texttt{TFCT\_Interp} est au cœur de cette modification : elle construit une nouvelle matrice en interpolant le module entre trames voisines et en maintenant une phase cohérente au cours du temps.
+
+% ============================================================================
+% MODIFICATION DE LA VITESSE
+% ============================================================================
+
+\chapter{Modification de la Vitesse (Speed)}
+
+Avant d'entrer dans les détails, rappelons simplement que ``modifier la vitesse'' revient à étirer ou compresser un enregistrement sans que la voix devienne aiguë comme un écureuil ou grave comme un monstre. Les paragraphes ci-dessous font le lien entre cette intuition (lire plus vite ou plus lentement un livre audio) et les étapes algorithmiques nécessaires pour y parvenir proprement.
+
+\section{Problématique vitesse/pitch}
+
+\subsection{Changement naïf d'échelle temporelle}
+
+Modifier la vitesse en définissant $y(t) = x(\theta t)$ entraîne, via la propriété de mise à l'échelle de la transformée de Fourier :
+
+\begin{equation}
+Y(f) = \frac{1}{|\theta|} X\left(\frac{f}{\theta}\right).
+\end{equation}
+
+Ainsi, changer la durée modifie en même temps le contenu fréquentiel et donc la hauteur perçue (pitch).
+
+\subsection{Objectif}
+
+L'objectif est d'obtenir un signal $y(t)$ :
+
+\begin{itemize}
+    \item plus long ou plus court que $x(t)$ (vitesse modifiée) ;
+    \item mais dont les fréquences caractéristiques (formants, fondamentale) restent inchangées.
+\end{itemize}
+
+\section{Principe de l'algorithme utilisé}
+
+\subsection{Nouvelle base de temps}
+
+Si $t_x$ désigne la base de temps correspondant aux trames d'analyse (pas $\Delta t_x = \text{hop}$), on définit une nouvelle base de temps $t_y$ pour la synthèse :
+
+\[
+\Delta t_y = \frac{\Delta t_x}{\text{rapp}},
+\]
+
+où $\text{rapp}$ est le facteur de vitesse (par exemple 0,6 pour ralentir, 1,5 pour accélérer).
+
+\subsection{Interpolation fréquentielle}
+
+Pour chaque instant $t_{y_j}$, on se situe entre deux trames d'analyse $i$ et $i+1$ :
+
+\[
+t_{y_j} \in [t_{x_i}, t_{x_{i+1}}].
+\]
+
+On interpole alors :
+\begin{itemize}
+    \item le \textbf{module} du spectre (interpolation linéaire) ;
+    \item la \textbf{phase} en corrigeant le saut de phase réel, afin de garantir la continuité.
+\end{itemize}
+
+Cette étape est réalisée par la fonction \texttt{TFCT\_Interp}, qui parcourt le vecteur des temps interpolés $t$ et construit la nouvelle matrice de TFCT.
+
+\section{Continuité de phase}
+
+La phase théorique entre deux trames successives pour une fréquence donnée dépend de la distance entre trames et de la fréquence du bin. L'écart observé est corrigé, puis réduit modulo $2\pi$ afin d'éviter les sauts de phase, avant d'être intégré pour reconstruire une phase lisse au cours du temps.
+
+\section{Organigramme du traitement de vitesse}
+
+\begin{infobox}[Organigramme du traitement Speed]
+\begin{enumerate}
+    \item Charger le signal et choisir un facteur de vitesse $\text{rapp}$.
+    \item Calculer la TFCT : tramage, fenêtrage de Hanning, FFT $\rightarrow X$.
+    \item Construire la nouvelle base de temps $t_y$.
+    \item Appeler \texttt{TFCT\_Interp} pour interpoler $X$ sur $t_y$.
+    \item Calculer la TFCT inverse (IFFT + overlap-add) pour obtenir $y_{\text{speed}}$.
+    \item Normaliser le résultat et écouter/visualiser.
+\end{enumerate}
+\end{infobox}
+
+\section{Résultats expérimentaux}
+
+Dans cette section, nous présentons les résultats pour deux fichiers fournis et pour un enregistrement de notre propre voix.
+
+\subsection{Fichier \texttt{Extrait.wav}}
+
+Nous avons testé deux valeurs du facteur de vitesse :
+
+\begin{itemize}
+    \item $\text{rapp} = 0{,}6$ : parole ralentie d'environ 40\% ;
+    \item $\text{rapp} = 1{,}5$ : parole accélérée de 50\%.
+\end{itemize}
+
+\begin{figure}[H]
+    \centering
+    % INSÉRER FIGURE TEMPS+SPECTRE EXEMPLE VITESSE LENTE (Extrait.wav)
+    \includegraphics[width=0.9\textwidth]{figures/speed_extrait_rapp06.png}
+    \caption{Signal \texttt{Extrait.wav} original vs. version ralentie ($\text{rapp}=0{,}6$) : forme temporelle et spectrogramme.}
+    \label{fig:speed_extrait_lent}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    % INSÉRER FIGURE TEMPS+SPECTRE EXEMPLE VITESSE RAPIDE (Extrait.wav)
+    \includegraphics[width=0.9\textwidth]{figures/speed_extrait_rapp15.png}
+    \caption{Signal \texttt{Extrait.wav} original vs. version accélérée ($\text{rapp}=1{,}5$) : forme temporelle et spectrogramme.}
+    \label{fig:speed_extrait_rapide}
+\end{figure}
+
+Commentaires (à adapter en fonction des figures) :
+\begin{itemize}
+    \item La durée du signal est bien augmentée/diminuée selon le facteur choisi.
+    \item Les structures fréquentielles (formants) restent globalement inchangées, indiquant que la hauteur perçue est conservée.
+    \item Des artefacts légers de type ``flottement'' apparaissent pour des facteurs très éloignés de 1.
+\end{itemize}
+
+\subsection{Fichier \texttt{Halleluia.wav}}
+
+\begin{figure}[H]
+    \centering
+    % INSÉRER FIGURE TEMPS+SPECTRE VITESSE (Halleluia.wav)
+    \includegraphics[width=0.9\textwidth]{figures/speed_halleluia_rapp08.png}
+    \caption{Effet de time-stretching sur \texttt{Halleluia.wav} (facteur de vitesse choisi).}
+    \label{fig:speed_halleluia}
+\end{figure}
+
+Pour ce fichier chanté, nous observons que la musicalité et la hauteur des notes sont préservées, ce qui est essentiel pour une application musicale.
+
+\subsection{Enregistrement de notre propre voix}
+
+\begin{figure}[H]
+    \centering
+    % INSÉRER FIGURE TEMPS+SPECTRE VITESSE (voix personnelle)
+    \includegraphics[width=0.9\textwidth]{figures/speed_voix_rapp12.png}
+    \caption{Application de l'effet Speed à un enregistrement de notre propre voix.}
+    \label{fig:speed_voix}
+\end{figure}
+
+La compréhension de la phrase reste bonne pour des facteurs modérés ($0{,}7 \leq \text{rapp} \leq 1{,}4$). Pour des valeurs plus extrêmes, la parole devient moins naturelle, ce qui illustre les limites pratiques de l'algorithme.
+
+% ============================================================================
+% MODIFICATION DU PITCH
+% ============================================================================
+
+\chapter{Modification du Pitch (Pitch-Shifting)}
+
+L'idée est ici d'imiter ce que ferait un chanteur qui monte ou descend d'une gamme, mais à l'intérieur d'un fichier audio existant. Pour clarifier, nous rappelons régulièrement ce qu'entraîne chaque étape sur l'écoute : quand nous parlons d'un facteur $a/b$, imaginez simplement un bouton ``voix plus aiguë/plus grave''. Les explications techniques restent présentes, mais chaque sous-section souligne la conséquence audible correspondante.
+
+\section{Problématique}
+
+Modifier la hauteur d'un signal tout en conservant sa durée est utile pour :
+\begin{itemize}
+    \item adapter une voix à une tessiture différente ;
+    \item créer des harmonies (tierce, quinte, octave) ;
+    \item transformer un timbre (voix plus grave ou plus aiguë).
+\end{itemize}
+
+Un simple ré-échantillonnage du signal (changer la fréquence d'échantillonnage) modifie la hauteur \textbf{et} la durée. L'enjeu est donc d'agir sur la hauteur sans toucher au temps.
+
+\section{Principe de l'algorithme utilisé}
+
+Nous adoptons une stratégie classique en deux étapes :
+
+\begin{enumerate}
+    \item \textbf{Time-stretching} : appliquer le vocodeur de phase avec un facteur $\alpha = \frac{a}{b}$ ;
+    \item \textbf{Ré-échantillonnage inverse} : ré-échantillonner le signal obtenu avec un facteur $\frac{b}{a}$ pour retrouver la durée initiale.
+\end{enumerate}
+
+Ainsi, la durée finale est identique à celle du signal d'origine, mais sa hauteur est modifiée d'un facteur $a/b$.
+
+\section{Chaîne de traitement}
+
+\begin{infobox}[Chaîne pitch-shifting]
+\begin{enumerate}
+    \item Entrée : signal $x(t)$, facteur de pitch $p = a/b$ (par exemple $p=\frac{3}{2}$ pour une quinte).
+    \item Étape 1 : $x_1(t) = \text{PVoc}(x(t), \alpha = p)$ (time-stretching).
+    \item Étape 2 : $y(t) = \text{Resample}(x_1(t), b, a)$.
+    \item Sortie : $y(t)$, même durée que $x(t)$, mais avec une hauteur multipliée par $p$.
+\end{enumerate}
+\end{infobox}
+
+\section{Paramètres de tests}
+
+Nous avons testé deux cas typiques :
+\begin{itemize}
+    \item \textbf{Pitch plus aigu} : $a/b = 3/2$ (environ +7 demi-tons, quinte juste) ;
+    \item \textbf{Pitch plus grave} : $a/b = 2/3$ (environ -7 demi-tons).
+\end{itemize}
+
+\section{Résultats expérimentaux}
+
+\subsection{Fichier \texttt{Extrait.wav}}
+
+\begin{figure}[H]
+    \centering
+    % INSÉRER FIGURE PITCH AIGU (Extrait.wav)
+    \includegraphics[width=0.9\textwidth]{figures/pitch_extrait_up.png}
+    \caption{Pitch-shifting montant ($a/b = 3/2$) sur \texttt{Extrait.wav} : spectrogrammes avant/après.}
+    \label{fig:pitch_extrait_aigu}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    % INSÉRER FIGURE PITCH GRAVE (Extrait.wav)
+    \includegraphics[width=0.9\textwidth]{figures/pitch_extrait_down.png}
+    \caption{Pitch-shifting descendant ($a/b = 2/3$) sur \texttt{Extrait.wav} : spectrogrammes avant/après.}
+    \label{fig:pitch_extrait_grave}
+\end{figure}
+
+Commentaires :
+\begin{itemize}
+    \item La durée du signal est conservée, comme on le voit sur l'axe du temps ;
+    \item Les structures fréquentielles sont décalées vers le haut ou vers le bas, ce qui correspond à la modification de hauteur ;
+    \item La parole reste compréhensible pour ces facteurs, même si des artefacts apparaissent sur les consonnes.
+\end{itemize}
+
+\subsection{Fichier \texttt{Halleluia.wav}}
+
+\begin{figure}[H]
+    \centering
+    % INSÉRER FIGURE PITCH (Halleluia.wav)
+    \includegraphics[width=0.9\textwidth]{figures/pitch_halleluia_up4.png}
+    \caption{Modification du pitch sur \texttt{Halleluia.wav} (exemple : +4 demi-tons).}
+    \label{fig:pitch_halleluia}
+\end{figure}
+
+Le pitch-shifting sur un signal chanté reste relativement naturel pour des décalages modérés (±3–4 demi-tons). Au-delà, le timbre devient artificiel (effet ``Mickey'' ou voix très grave).
+
+\subsection{Enregistrement de notre propre voix}
+
+\begin{figure}[H]
+    \centering
+    % INSÉRER FIGURE PITCH (voix personnelle)
+    \includegraphics[width=0.9\textwidth]{figures/pitch_voix_up.png}
+    \caption{Application du pitch-shifting à notre propre voix (exemple : voix plus aiguë).}
+    \label{fig:pitch_voix}
+\end{figure}
+
+L'écoute met en évidence que la voix reste intelligible. L'effet peut être utilisé soit de manière subtile (correction de hauteur), soit de façon très marquée pour créer des personnages caricaturaux.
+
+% ============================================================================
+% ROBOTISATION DE LA VOIX
+% ============================================================================
+
+\chapter{Robotisation de la Voix}
+
+On peut résumer cet effet comme un ``filtre science-fiction''. Multiplier le signal par une porteuse revient à mélanger la voix avec une tonalité régulière : les formules qui suivent précisent la recette, mais nous indiquons toujours ce que l'auditeur perçoit (plus métallique, moins de nuances). L'objectif est que la démarche reste compréhensible même si l'on n'a jamais manipulé d'équations complexes.
+
+\section{Principe théorique}
+
+L'effet de robotisation s'obtient en multipliant le signal de parole par une porteuse complexe de fréquence $f_c$ :
+
+\begin{equation}
+y_{\text{rob}}(t) = \Re\{x(t) \, e^{-j 2\pi f_c t}\}.
+\end{equation}
+
+Cette opération est proche d'une modulation en anneau (ring modulation) et se traduit dans le domaine fréquentiel par la création de bandes latérales autour de $f_c$. Le résultat est une voix métallique, avec perte de la prosodie naturelle.
+
+\section{Algorithme utilisé}
+
+La fonction \texttt{Rob} suit les étapes suivantes :
+
+\begin{enumerate}
+    \item Calcul d'un vecteur temps $t = n/F_s$, où $n$ est l'indice d'échantillon et $F_s$ la fréquence d'échantillonnage ;
+    \item Calcul de la porteuse complexe $e^{-j2\pi f_c t}$ ;
+    \item Multiplication échantillon par échantillon $x(t)\,e^{-j2\pi f_c t}$ ;
+    \item Prise de la partie réelle et normalisation.
+\end{enumerate}
+
+Le paramètre essentiel est la fréquence porteuse $f_c$. Nous avons testé plusieurs valeurs : 200 Hz, 500 Hz, 1000 Hz, 1500 Hz.
+
+\section{Résultats expérimentaux}
+
+\subsection{Influence de la fréquence porteuse sur \texttt{Extrait.wav}}
+
+\begin{figure}[H]
+    \centering
+    % INSÉRER FIGURE ROBOT 500 Hz
+    \includegraphics[width=0.9\textwidth]{figures/robot_extrait_fc500.png}
+    \caption{Robotisation de \texttt{Extrait.wav} avec $f_c = 500$ Hz : signal temporel et spectrogramme.}
+    \label{fig:robot_extrait_500}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    % INSÉRER FIGURE ROBOT 1500 Hz
+    \includegraphics[width=0.9\textwidth]{figures/robot_extrait_fc1500.png}
+    \caption{Robotisation de \texttt{Extrait.wav} avec $f_c = 1500$ Hz : signal temporel et spectrogramme.}
+    \label{fig:robot_extrait_1500}
+\end{figure}
+
+Commentaires :
+\begin{itemize}
+    \item Pour des fréquences porteuses basses (200–500 Hz), la voix reste relativement reconnaissable mais avec un timbre métallique ;
+    \item Pour des fréquences plus élevées (1000–1500 Hz), la parole devient difficilement intelligible et très robotique.
+\end{itemize}
+
+\subsection{Fichier \texttt{Halleluia.wav}}
+
+\begin{figure}[H]
+    \centering
+    % INSÉRER FIGURE ROBOT (Halleluia.wav)
+    \includegraphics[width=0.9\textwidth]{figures/robot_halleluia_fc800.png}
+    \caption{Robotisation appliquée à \texttt{Halleluia.wav}.}
+    \label{fig:robot_halleluia}
+\end{figure}
+
+Sur un signal chanté, l'effet rappelle certaines voix de musique électronique (Daft Punk, etc.) lorsque $f_c$ est bien choisi.
+
+\subsection{Enregistrement de notre propre voix}
+
+\begin{figure}[H]
+    \centering
+    % INSÉRER FIGURE ROBOT (voix personnelle)
+    \includegraphics[width=0.9\textwidth]{figures/robot_voix_fc800.png}
+    \caption{Robotisation de notre propre voix (exemple $f_c = 800$ Hz).}
+    \label{fig:robot_voix}
+\end{figure}
+
+Cet exemple illustre l'appropriation personnelle du projet : nous pouvons transformer notre voix en voix de robot, avec un contrôle direct via le paramètre $f_c$.
+
+% ============================================================================
+% EFFETS SUPPLÉMENTAIRES ET APPROPRIATION
+% ============================================================================
+
+\chapter{Banque d'effets supplémentaires et appropriation}
+
+Pour ne pas perdre le lecteur, nous présentons chaque effet comme un bouton d'une pédale multi-effets : on explique d'abord ce que les oreilles perçoivent (par exemple ``wah-wah = filtre qui ouvre/ferme la voix'') avant d'aller vers l'équation. Ainsi, même sans expérience en DSP, on peut comprendre à quoi sert chaque formule.
+
+Au-delà des trois traitements imposés, nous avons construit une banque de \textbf{22 effets supplémentaires} exploitant les briques PVoc/robotisation. Ils sont disponibles dans \texttt{Vocodeur.m} (section ``Extras'') et dans \texttt{MixeurDJApp}, de sorte que l'appropriation est à la fois code et interface. Les figures associées ont été générées automatiquement avec \texttt{generate\_report\_figures.m}, ce qui garantit que chaque courbe est synchronisée avec la description qui suit.
+
+\begin{table}[H]
+\centering
+\caption{Familles d'effets supplémentaires}
+\label{tab:banque_effets}
+\begin{tabularx}{\textwidth}{|l|X|X|}
+\hline
+	\textbf{Famille} & \textbf{Effets} & \textbf{Fonctions MATLAB} \\
+\hline
+Filtres dynamiques & Auto-wah, Wah-Wah & \texttt{Auto\_wah.m}, \texttt{Wah\_wah.m} \\
+Modulations & Tremolo, Vibrato, Ring Mod & \texttt{Tremolo.m}, \texttt{Vibrato.m}, \texttt{RingMod.m} \\
+Transformations vocales & Transforme ma voix, Acapella, Autotune & \texttt{transforme\_vers\_ma\_voie.m}, \texttt{Acapella.m}, \texttt{Autotune.m} \\
+Colorations lo-fi & Bitcrusher, Lo-fi, Bruit blanc & \texttt{Bitcrusher.m}, \texttt{Lo\_fi.m}, \texttt{Bruit\_blanc.m} \\
+Spatialisation/mouvement & Chorus/Echo, Flanger, Phaser, Stereo movement & \texttt{Chorus.m}, \texttt{Flanger.m}, \texttt{Phaser.m}, \texttt{Stereo\_mov.m} \\
+Saturations & Fuzz, Hard Clip, Soft Clip, Overdrive & \texttt{Fuzz.m}, \texttt{Distort\_hard\_clipping.m}, \texttt{Distort\_soft\_clipping.m}, \texttt{Overdrive.m} \\
+Textures et ambiances & Granularize, Reverb large, Reverb douce & \texttt{Granularize.m}, \texttt{Reverb.m}, \texttt{Reverb2.m} \\
+Presets combinés & Harmonizer, Voix ``alien'' & Chaînes dédiées dans \texttt{Vocodeur.m} \\
+\hline
+\end{tabularx}
+\end{table}
+
+Les sections suivantes détaillent chaque effet individuellement (principe, équation clé, implémentation, visualisation).
+
+\section{Auto-wah}
+    \textbf{Principe.} La fréquence de coupure du passe-bande suit l'enveloppe $e[n] = |\mathcal{H}\{x[n]\}|$ estimée via transformée de Hilbert locale.
+\begin{equation}
+f_c[n] = f_{\min} + (f_{\max} - f_{\min}) \frac{e[n]-\min(e)}{\max(e)-\min(e)}, \quad y[n] = (h_{BP}(\cdot,f_c[n]) * x)[n].
+\end{equation}
+    \textbf{Implémentation.} \texttt{Auto_wah.m} calcule l'enveloppe, déclenche un filtre RBJ dont le centre varie entre 300 et 2000 Hz, puis renormalise le niveau.
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\textwidth]{figures/effect_autowah.png}
+    \caption{Auto-wah : ouverture/fermeture du filtre pilotée par l'enveloppe.}
+    \label{fig:effect_autowah}
+\end{figure}
+
+\section{Wah-Wah}
+	\textbf{Principe.} La fréquence centrale oscille périodiquement autour d'une valeur moyenne $f_0$ grâce à un LFO.
+\begin{equation}
+f_c[n] = f_0 + \Delta f \sin\left(\frac{2\pi f_{\text{LFO}}}{F_s} n\right), \quad y[n] = (h_{BP}(\cdot,f_c[n]) * x)[n].
+\end{equation}
+	\textbf{Implémentation.} \texttt{Wah\_wah.m} emploie un balayage triangulaire discret centré sur 1,8 kHz et amorti par $m=0{,}05$.
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\textwidth]{figures/effect_wahwah.png}
+    \caption{Wah-Wah : modulation régulière des formants.}
+    \label{fig:effect_wahwah}
+\end{figure}
+
+\section{Tremolo}
+	\textbf{Principe.} Modulation d'amplitude par une onde sinusoïdale.
+\begin{equation}
+y[n] = \big(1 + \alpha \sin(2\pi f_m n/F_s)\big) x[n].
+\end{equation}
+	\textbf{Implémentation.} \texttt{Tremolo.m} applique cette enveloppe à 8~Hz avec $\alpha=0{,}5$ puis compense la dynamique.
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\textwidth]{figures/effect_tremolo.png}
+    \caption{Tremolo : pulsation du niveau sonore.}
+    \label{fig:effect_tremolo}
+\end{figure}
+
+\section{Vibrato}
+	\textbf{Principe.} Variation périodique du délai, donc de la hauteur perçue.
+\begin{equation}
+y[n] = x[n - d[n]], \quad d[n] = D \sin(2\pi f_m n/F_s).
+\end{equation}
+	\textbf{Implémentation.} \texttt{Vibrato.m} recalcule l'indice $n-d[n]$ (limité) grâce à une interpolation linéaire pour $D=3$~ms.
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\textwidth]{figures/effect_vibrato.png}
+    \caption{Vibrato : ondulation subtile du pitch.}
+    \label{fig:effect_vibrato}
+\end{figure}
+
+\section{Ring Mod}
+	\textbf{Principe.} Produit du signal avec une porteuse sinusoïdale modulée.
+\begin{equation}
+y[n] = x[n] \sin\Big(2\pi f_c n/F_s + \beta \sin(2\pi f_v n/F_s)\Big).
+\end{equation}
+	\textbf{Implémentation.} \texttt{RingMod.m} fixe $f_c=150$~Hz, $f_v=0{,}8$~Hz et un mix wet/dry de 70/30.
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\textwidth]{figures/effect_ringmod.png}
+    \caption{Ring modulation : timbre métallique riche en bandes latérales.}
+    \label{fig:effect_ringmod}
+\end{figure}
+
+\section{Transforme ma voix}
+	\textbf{Principe.} Ajuster la fondamentale et les formants vers une voix cible.
+\begin{equation}
+\rho = \frac{f_0^{\text{cible}}}{f_0^{\text{source}}}, \quad y[n] = \Big(\prod_{k=1}^3 h_k * \text{PVoc}(x,\rho)\Big)[n].
+\end{equation}
+	\textbf{Implémentation.} \texttt{transforme\_vers\_ma\_voie.m} estime les formants de \texttt{Evil\_laugh\_elise.wav}, applique un pitch-shift $\rho$ puis cascade trois filtres RBJ ciblés.
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\textwidth]{figures/effect_transforme_ma_voix.png}
+    \caption{Transforme ma voix : alignement timbral progressif.}
+    \label{fig:effect_transforme}
+\end{figure}
+
+\section{Acapella}
+	\textbf{Principe.} Extraction grossière de la voix par filtrage bande étroite et seuillage.
+\begin{equation}
+y[n] = \mathcal{B}_{[500,1000]}\{x[n]\}, \quad y[n] = 0 \text{ si } |y[n]| < \theta.
+\end{equation}
+	\textbf{Implémentation.} \texttt{Acapella.m} applique le filtre RBJ et un gate à $\theta=0{,}1$ pour supprimer l'accompagnement.
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\textwidth]{figures/effect_acapella.png}
+    \caption{Acapella : énergie concentrée sur la bande vocale.}
+    \label{fig:effect_acapella}
+\end{figure}
+
+\section{Autotune}
+	\textbf{Principe.} Détection de $f_0$ par autocorrélation, quantification vers la gamme chromatique, puis pitch-shifting local.
+\begin{equation}
+\hat{f}_0[n] = \arg\max_{\tau>\tau_{\min}} R_x[\tau], \quad \rho[n] = \frac{f_{\text{note}}(\hat{f}_0[n])}{\hat{f}_0[n]}.
+\end{equation}
+	\textbf{Implémentation.} \texttt{Autotune.m} applique un PVoc fenêtre par fenêtre (20~ms, 75\% de recouvrement) avec lissage temporel de $\rho[n]$.
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\textwidth]{figures/effect_autotune.png}
+    \caption{Autotune : stabilisation de la fondamentale.}
+    \label{fig:effect_autotune}
+\end{figure}
+
+\section{Bitcrusher}
+	\textbf{Principe.} Réduction de résolution et maintien d'échantillons.
+\begin{equation}
+Q = 2^{b-1} - 1, \quad y[n] = \frac{1}{Q}\operatorname{round}(Q x[n_k]), \quad n_k = k N_s.
+\end{equation}
+	\textbf{Implémentation.} \texttt{Bitcrusher.m} quantifie à $b=6$ bits et conserve uniquement un échantillon sur $N_s=4$ (sample-and-hold).
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\textwidth]{figures/effect_bitcrusher.png}
+    \caption{Bitcrusher : marches d'amplitude typiques.}
+    \label{fig:effect_bitcrusher}
+\end{figure}
+
+\section{Lo-fi}
+	\textbf{Principe.} Quantification pure façon 8 bits.
+\begin{equation}
+y[n] = \frac{1}{Q}\operatorname{round}(Q x[n]), \quad Q = 2^{7}-1.
+\end{equation}
+	\textbf{Implémentation.} \texttt{Lo\_fi.m} applique cette quantification indépendamment sur chaque canal puis renormalise.
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\textwidth]{figures/effect_lofi.png}
+    \caption{Lo-fi : texture numérique rétro.}
+    \label{fig:effect_lofi}
+\end{figure}
+
+\section{Bruit blanc}
+	\textbf{Principe.} Ajout d'un bruit gaussien selon un rapport signal/bruit cible.
+\begin{equation}
+y[n] = \frac{x[n] + \eta[n]}{\max |x + \eta|}, \quad \eta[n] \sim \mathcal{N}\big(0, P_x/10^{\text{RSB}/10}\big).
+\end{equation}
+	\textbf{Implémentation.} \texttt{Bruit\_blanc.m} ajoute un bruit blanc calibré pour $\text{RSB}=15$~dB puis remet le signal à pleine échelle.
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\textwidth]{figures/effect_bruit_blanc.png}
+    \caption{Bruit blanc contrôlé : effet radio/tape hiss.}
+    \label{fig:effect_bruit_blanc}
+\end{figure}
+
+\section{Chorus / Echo}
+	\textbf{Principe.} Somme de copies retardées et atténuées.
+\begin{equation}
+y[n] = x[n] + \sum_{k=1}^{N_c} \alpha^k x[n - k d], \quad d = \tau F_s.
+\end{equation}
+	\textbf{Implémentation.} \texttt{Chorus.m} crée trois copies ($\tau=350$~ms) avec gains décroissants, convertissant le signal mono en stéréo.
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\textwidth]{figures/effect_chorus_echo.png}
+    \caption{Chorus / Echo : épaississement immédiat.}
+    \label{fig:effect_chorus}
+\end{figure}
+
+\section{Flanger}
+	\textbf{Principe.} Mélange d'une copie retardée très courte et modulée.
+\begin{equation}
+y[n] = x[n] + \beta x[n - d[n]], \quad d[n] = d_{\max} \frac{1 + \sin(2\pi f_L n/F_s)}{2}.
+\end{equation}
+	\textbf{Implémentation.} \texttt{Flanger.m} fixe $d_{\max}=3$~ms, $f_L=1$~Hz et $\beta=0{,}7$.
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\textwidth]{figures/effect_flanger.png}
+    \caption{Flanger : peignes mobiles dans le spectre.}
+    \label{fig:effect_flanger}
+\end{figure}
+
+\section{Phaser}
+	\textbf{Principe.} Cascade de filtres tout-passe modulés.
+\begin{equation}
+y[n] = x[n] + g \prod_{m=1}^M \frac{1 - a_m(n) z^{-1}}{1 + a_m(n) z^{-1}} x[n].
+\end{equation}
+	\textbf{Implémentation.} \texttt{Phaser.m} utilise $M=4$ étages, un gain $g=0{,}7$ et un LFO lent pour faire glisser les zéros/pôles.
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\textwidth]{figures/effect_phaser.png}
+    \caption{Phaser : creux dynamiques caractéristiques.}
+    \label{fig:effect_phaser}
+\end{figure}
+
+\section{Fuzz}
+	\textbf{Principe.} Écrêtage carré extrême après fort gain.
+\begin{equation}
+y[n] = \operatorname{sgn}(g x[n]) \, u(|g x[n]| - \theta),
+\end{equation}
+où $u(\cdot)$ est la fonction de Heaviside.
+	\textbf{Implémentation.} \texttt{Fuzz.m} applique $g=10$ et $\theta=0{,}4$, puis restaure le niveau RMS.
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\textwidth]{figures/effect_fuzz.png}
+    \caption{Fuzz : signal quasi carré saturé.}
+    \label{fig:effect_fuzz}
+\end{figure}
+
+\section{Hard Clip}
+	\textbf{Principe.} Limitation stricte après amplification.
+\begin{equation}
+y[n] = \operatorname{clip}(g x[n], -T, T).
+\end{equation}
+	\textbf{Implémentation.} \texttt{Distort\_hard\_clipping.m} choisit $g=6$, $T=0{,}35$ et applique le traitement canal par canal.
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\textwidth]{figures/effect_hardclip.png}
+    \caption{Hard clip : sommets tronqués nets.}
+    \label{fig:effect_hardclip}
+\end{figure}
+
+\section{Soft Clip}
+	\textbf{Principe.} Saturation douce de type exponentiel.
+\begin{equation}
+y[n] = \operatorname{sgn}(x[n]) \Big(1 - e^{-g |x[n]|}\Big).
+\end{equation}
+	\textbf{Implémentation.} \texttt{Distort\_soft\_clipping.m} applique cette fonction symétrique ($g=4$) et recentre le signal.
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\textwidth]{figures/effect_softclip.png}
+    \caption{Soft clip : compression progressive des crêtes.}
+    \label{fig:effect_softclip}
+\end{figure}
+
+\section{Overdrive}
+	\textbf{Principe.} Saturation progressive par morceaux.
+\begin{equation}
+y[n] = \begin{cases}
+2 x[n] & |x[n]| < T \\
+\operatorname{sgn}(x[n])\!\left(1 - \frac{(2 - 3|x[n]|)^2}{3}\right) & T \le |x[n]| < 2T \\
+\operatorname{sgn}(x[n]) & |x[n]| \ge 2T
+\end{cases}
+\end{equation}
+	\textbf{Implémentation.} \texttt{Overdrive.m} reprend exactement cette courbe avec $T=0{,}3$.
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\textwidth]{figures/effect_overdrive.png}
+    \caption{Overdrive : saturation chaude façon ampli à lampes.}
+    \label{fig:effect_overdrive}
+\end{figure}
+
+\section{Granularize}
+	\textbf{Principe.} Somme de grains fenêtrés placés aléatoirement.
+\begin{equation}
+y[n] = \sum_{g=1}^{N_g} a_g \, w_g[n-n_g] \, x[n-n_g].
+\end{equation}
+	\textbf{Implémentation.} \texttt{Granularize.m} crée $N_g=800$ grains Kaiser (0,2 à 2~s), répartis stéréo, puis additionne leurs contributions.
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\textwidth]{figures/effect_granularize.png}
+    \caption{Granularize : texture glitchée et dense.}
+    \label{fig:effect_granularize}
+\end{figure}
+
+\section{Reverb large}
+	\textbf{Principe.} Réseau simple de boucles à rétroaction.
+\begin{equation}
+y[n] = x[n] + \sum_{i=1}^3 g_i y[n-d_i].
+\end{equation}
+	\textbf{Implémentation.} \texttt{Reverb.m} place trois délais (20, 37 et 58~ms) avec $g_i \in \{0{,}6, 0{,}5, 0{,}4\}$.
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\textwidth]{figures/effect_reverb_large.png}
+    \caption{Reverb large : queue brillante et espacée.}
+    \label{fig:effect_reverb_large}
+\end{figure}
+
+\section{Reverb douce}
+	\textbf{Principe.} Convolution avec une réponse impulsionnelle exponentielle.
+\begin{equation}
+h[n] = e^{-n/(\tau F_s)}, \quad y[n] = (x * h)[n].
+\end{equation}
+	\textbf{Implémentation.} \texttt{Reverb2.m} choisit $\tau=0{,}5$~s, réalise la convolution FFT, puis mixe 60\% wet / 40\% dry.
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\textwidth]{figures/effect_reverb_douce.png}
+    \caption{Reverb douce : décroissance chaleureuse.}
+    \label{fig:effect_reverb_douce}
+\end{figure}
+
+\section{Stereo movement}
+	\textbf{Principe.} Automatisation du panoramique en quatre segments.
+\begin{equation}
+y_L[n] = w_L[n] x_L[n], \quad y_R[n] = w_R[n] x_R[n], \quad w_R[n] = 1 - w_L[n].
+\end{equation}
+	\textbf{Implémentation.} \texttt{Stereo\_mov.m} découpe le signal en quatre blocs égaux et fait varier $w_L$ linéairement de 1 à 0 puis l'inverse.
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\textwidth]{figures/effect_stereo_move.png}
+    \caption{Stereo movement : panoramique automatique gauche-droite.}
+    \label{fig:effect_stereo_move}
+\end{figure}
+
+\section{Combinaisons créatives}
+
+\subsection{Harmonizer}
+Addition de la voix originale et d'une copie transposée d'une quinte juste ($a/b = 3/2$) par le vocodeur de phase, suivie d'un mixage équilibré.
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\textwidth]{figures/harmonizer\_voix\_quinte.png}
+    \caption{Harmonizer : duo instantané.}
+    \label{fig:harmonizer_voix}
+\end{figure}
+
+\subsection{Voix ``alien''}
+Pitch-shifting par un facteur 2 suivi d'une robotisation ($f_c = 1200$~Hz) pour produire un timbre inhumain.
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\textwidth]{figures/alien\_voix.png}
+    \caption{Voix ``alien'' : transformation drastique.}
+    \label{fig:alien_voix}
+\end{figure}
+
+\section{Intégration dans \texttt{MixeurDJApp}}
+Chaque effet possède un bouton dédié (quatre colonnes) dans \texttt{MixeurDJApp}. La sélection s'illumine, un slider Wet/Dry global reste accessible et l'utilisateur peut enchaîner rapidement les démonstrations tout en affichant les courbes ``Live waveform''. Cela facilite la comparaison audible avec les figures présentées ci-dessus.
+% ============================================================================
+% SYNTHÈSE DES RÉSULTATS
+% ============================================================================
+
+\chapter{Synthèse des Résultats Expérimentaux}
+
+Cette synthèse sert de lecture rapide : même sans suivre toutes les démonstrations précédentes, on peut balayer ce chapitre pour savoir ce qui fonctionne bien, ce qui est perfectible, et dans quelles conditions nos effets sonnent le mieux. Chaque tableau ou bullet point précise la conséquence audible plutôt que seulement le résultat mathématique.
+
+\section{Tableau récapitulatif}
+
+\begin{table}[H]
+\centering
+\caption{Synthèse qualitative des tests réalisés}
+\label{tab:resultats_synthese}
+\begin{tabularx}{\textwidth}{|l|l|X|X|}
+\hline
+    	extbf{Effet} & \textbf{Signal} & \textbf{Paramètres} & \textbf{Observation principale} \\
+\hline
+Speed & Extrait.wav & $\text{rapp}=0{,}6$ / $1{,}5$ & Durée modifiée comme prévu, pitch globalement conservé. \\
+\hline
+Speed & Voix perso & $\text{rapp}=0{,}75$ & Parole compréhensible, timbre légèrement dégradé pour les consonnes. \\
+\hline
+Pitch & Extrait.wav & $a/b=3/2$ / $2/3$ & Hauteur modifiée à durée constante, intelligibilité correcte. \\
+\hline
+Pitch & Halleluia.wav & +4 demi-tons & Chant restitué de façon naturelle pour un écart modéré. \\
+\hline
+Robotisation & Extrait.wav & $f_c = 500$ / $1500$ Hz & Voix métallique ; intelligibilité diminue lorsque $f_c$ augmente. \\
+\hline
+Harmonizer & Voix perso & quinte au-dessus & Effet de duo vocal crédible. \\
+\hline
+Voix ``alien'' & Voix perso & pitch $\times 2$ + robot & Voix très transformée, caractère ``alien'' marqué. \\
+\hline
+\end{tabularx}
+\end{table}
+
+\section{Discussion générale}
+
+Globalement, les résultats montrent que :
+\begin{itemize}
+    \item le vocodeur de phase permet de dissocier partiellement la durée et la hauteur du signal ;
+    \item des artefacts apparaissent pour des facteurs extrêmes, mais restent acceptables dans la plupart des cas testés ;
+    \item les briques de base (Speed, Pitch, Robot) peuvent être combinées pour produire des effets créatifs plus complexes (Harmonizer, voix alien).
+\end{itemize}
+
+% ============================================================================
+% CONCLUSION
+% ============================================================================
+
+\chapter{Conclusion Générale}
+
+La conclusion reformule les messages clés en langage courant : quels effets avons-nous réellement obtenus à l'écoute, quelles difficultés pratiques subsistent, et comment quelqu'un qui voudrait prolonger le projet peut s'y prendre. Ainsi, un évaluateur non spécialiste peut rapidement vérifier que le cahier des charges est rempli.
+
+\section{Bilan du projet}
+
+Ce projet a permis de réaliser et de comprendre en détail un vocodeur de phase en MATLAB. Les objectifs principaux ont été atteints :
+
+\begin{itemize}
+    \item \textbf{Modification de la vitesse} sans changement de hauteur perceptible, en s'appuyant sur la TFCT et l'interpolation fréquentielle ;
+    \item \textbf{Modification du pitch} à durée constante, via une combinaison de time-stretching et de ré-échantillonnage ;
+    \item \textbf{Robotisation de la voix} par modulation en fréquence avec une porteuse complexe.
+\end{itemize}
+
+Une banque complète de 22 effets supplémentaires (distorsions, filtres dynamiques, spatialisation, presets Harmonizer/"alien", etc.) démontre notre appropriation du vocodeur et sert de terrain d'expérimentation.
+
+\section{Apports pédagogiques}
+
+Ce travail nous a permis de :
+\begin{itemize}
+    \item manipuler concrètement la TFCT et comprendre le rôle de la phase ;
+    \item expérimenter l'impact de paramètres (taille de fenêtre, recouvrement, facteurs de pitch/vitesse) sur la qualité sonore ;
+    \item structurer un projet de traitement du signal de bout en bout (théorie, algorithmes, tests, analyse critique).
+\end{itemize}
+
+\section{Limites et perspectives}
+
+Plusieurs pistes d'amélioration sont envisageables :
+\begin{itemize}
+    \item optimisation du temps de calcul pour une utilisation plus proche du temps réel ;
+    \item amélioration de la qualité du pitch-shifting (prise en compte des formants, techniques plus avancées) ;
+    \item développement d'une interface graphique conviviale permettant de sélectionner les fichiers, les effets et leurs paramètres.
+\end{itemize}
+
+% ============================================================================
+% BIBLIOGRAPHIE
+% ============================================================================
+
+\begin{thebibliography}{99}
+
+\bibitem{laroche1999} Laroche, J., Dolson, M., ``Improved phase vocoder time-stretching at high quality'', \textit{ICASSP}, 1999.
+
+\bibitem{portnoff1980} Portnoff, M.R., ``Time-frequency representation of digital signals'', \textit{IEEE Trans. ASSP}, 1980.
+
+\bibitem{allen1977} Allen, J.B., Rabiner, L.R., ``A unified approach to short-time Fourier analysis and synthesis'', \textit{Proceedings of the IEEE}, 1977.
+
+\bibitem{mathworks} MathWorks, ``Signal Processing Toolbox Documentation'', \url{https://mathworks.com}.
+
+\end{thebibliography}
+
+% ============================================================================
+% ANNEXES
+% ============================================================================
+
+\appendix
+
+\chapter{Structure des fichiers du projet}
+
+Le projet MATLAB est organisé comme suit (structure indicative) :
+
+\begin{itemize}
+    \item \textbf{Vocodeur.m} : script principal de démonstration (chargement des fichiers, appels aux effets).
+    \item \textbf{PVoc.m} : implémentation du vocodeur de phase (time-stretching).
+    \item \textbf{TFCT.m} : calcul de la TFCT (analyse).
+    \item \textbf{TFCT\_Interp.m} : interpolation fréquentielle et correction de phase.
+    \item \textbf{TFCTInv.m} : TFCT inverse (synthèse par overlap-add).
+    \item \textbf{Rob.m} : robotisation de la voix.
+    \item \textbf{Pitch\_speed.m} ou fonctions associées : construction du pitch-shifting.
+    \item \textbf{MixeurDJApp.m} : interface utilisateur pour piloter la banque d'effets.
+    \item \textbf{generate\_report\_figures.m} : export automatique des figures (temps, spectre, spectrogramme) utilisées dans ce rapport.
+\end{itemize}
+
+\chapter{Guide d'utilisation (sans code)}
+
+\section{Lancement du projet}
+
+\begin{enumerate}
+    \item Ouvrir MATLAB et se placer dans le répertoire contenant les fichiers du projet.
+    \item Vérifier que les fichiers audio fournis (\texttt{Extrait.wav}, \texttt{Diner.wav}, \texttt{Halleluia.wav}, etc.) sont accessibles.
+    \item Lancer le script principal \texttt{Vocodeur.m}.
+\end{enumerate}
+
+\section{Procédure de test}
+
+\begin{enumerate}
+    \item Choisir un fichier d'entrée (parole ou chant).
+    \item Appliquer successivement les trois effets principaux (Speed, Pitch, Robot) avec différents paramètres.
+    \item Sauvegarder les signaux obtenus et générer les figures temporelles/spectrales utilisées dans le rapport.
+\end{enumerate}
+
+\chapter{Production automatique des figures}
+
+Le script \texttt{generate\_report\_figures.m} (fourni avec le projet) automatise l'export des figures demandées :
+
+\begin{enumerate}
+    \item Lancer MATLAB dans le dossier du projet et exécuter \texttt{generate\_report\_figures}. Le script crée automatiquement le dossier \texttt{figures/}.
+    \item Pour chaque scénario (speed lent/rapide, pitch \uparrow/\downarrow, robotisation, Harmonizer, alien, etc.), trois sous-graphiques sont générés (forme temporelle, spectre en magnitude, spectrogramme) puis exportés en \texttt{.png} via \texttt{exportgraphics}.
+    \item Les noms des fichiers correspondent exactement à ceux référencés dans le rapport :
+    \begin{itemize}
+        \item \texttt{figures/speed\_extrait\_rapp06.png}, \texttt{figures/speed\_extrait\_rapp15.png}, \texttt{figures/speed\_halleluia\_rapp08.png}, \texttt{figures/speed\_voix\_rapp12.png};
+        \item \texttt{figures/pitch\_extrait\_up.png}, \texttt{figures/pitch\_extrait\_down.png}, \texttt{figures/pitch\_halleluia\_up4.png}, \texttt{figures/pitch\_voix\_up.png};
+        \item \texttt{figures/robot\_extrait\_fc500.png}, \texttt{figures/robot\_extrait\_fc1500.png}, \texttt{figures/robot\_halleluia\_fc800.png}, \texttt{figures/robot\_voix\_fc800.png};
+        \item \texttt{figures/harmonizer\_voix\_quinte.png}, \texttt{figures/alien\_voix.png}.
+    \end{itemize}
+    \item Les exports peuvent être doublés en PDF en ajoutant l'option \texttt{exportgraphics(fig, '...pdf', 'ContentType','vector')} dans le script.
+\end{enumerate}
+
+    \section{Banque d'extraits de démonstration}
+
+    Pour faciliter la correction, nous fournissons \textbf{treize extraits audio} directement exploitables dans \texttt{Vocodeur.m} et dans \texttt{MixeurDJApp}. Ils couvrent les fichiers voix imposés (\texttt{Extrait.wav}, \texttt{Diner.wav}, \texttt{Halleluia.wav}) ainsi que dix boucles synthétiques générées automatiquement par \texttt{generate\_extrait.m}. Ce script (désormais fonction) crée des fichiers WAV de 6~secondes comprenant :
+
+    \begin{itemize}
+        \item \texttt{extrait\_pop\_melodie.wav} -- mélodie pop sinusoïdale ;
+        \item \texttt{extrait\_basse\_groove.wav} -- ligne de basse funk ;
+        \item \texttt{extrait\_accords\_lents.wav} -- accord pad évolutif ;
+        \item \texttt{extrait\_chiptune.wav} -- onde carrée 8-bit ;
+        \item \texttt{extrait\_beat\_electro.wav} -- kick/snare 120~BPM ;
+        \item \texttt{extrait\_jazz\_bass.wav} -- walking bass jazz ;
+        \item \texttt{extrait\_classique\_arpege.wav} -- arpèges classiques ;
+        \item \texttt{extrait\_ambient.wav} -- drone ambiant + bruit léger ;
+        \item \texttt{extrait\_lofi\_loop.wav} -- boucle lo-fi avec wow/flutter ;
+        \item \texttt{extrait\_percusions.wav} -- percussions ``world''. 
+    \end{itemize}
+
+    Au lancement de \texttt{Vocodeur.m}, le paramètre \texttt{cfg.audioFile} est positionné sur \texttt{'ASK'} : un mini-menu texte énumère tous ces extraits et permet d'en choisir un numéro (ou de saisir un chemin personnalisé). L'interface \texttt{MixeurDJApp} utilise la même fonction utilitaire \texttt{get\_demo\_clips.m} pour pré-remplir sa liste déroulante, tout en laissant l'utilisateur ajouter ses propres fichiers. Ainsi, le correcteur dispose immédiatement d'une dizaine de clips variés couvrant des jeux d'harmoniques, du bruit et des percussions.
+
+\end{document}

@@ -1,27 +1,25 @@
-function y = Bruit_blanc(x, RSB)
-% Génère un bruit blanc gaussien pour un signal audio x
-% avec un rapport signal à bruit (RSB) donné (en dB).
-% Retourne le bruit blanc y (même taille que x)
-%
-% x : signal audio d entrée
-% RSB : rapport signal à bruit en dB (ex : 20, 5, 0, -10)
+function y = Bruit_blanc(x, RSB, mix)
+% Ajoute un bruit blanc gaussien avec un RSB cible
+% x : signal d'entrée (mono ou stéréo)
+% RSB : rapport signal/bruit en dB (défaut 10 dB)
+% mix : coefficient multiplicatif du bruit (0..1, défaut 1)
 
-if nargin < 2
-    RSB = 10; % Valeur par défaut
+if nargin < 2, RSB = 10; end
+if nargin < 3, mix = 1.0; end
+
+x = double(x);
+signalPower = mean(x(:).^2);
+if signalPower <= 0
+    signalPower = 1e-6;
 end
 
-x = x(:); % S assure que x est un vecteur colonne
-N = length(x);
+noisePower = signalPower / (10^(RSB/10));
+sigma = sqrt(noisePower);
+noise = sigma * randn(size(x));
 
-% Calcul de la puissance moyenne du signal
-Rxx = xcorr(x, 'biased');
-Ps = max(Rxx); % Puissance moyenne du signal
+y = x + mix * noise;
 
-% Calcul de l écart type du bruit pour le RSB choisi
-sigma = sqrt(Ps/(10^(RSB/10)));
-
-% Génération du bruit blanc gaussien
-noise = sigma * randn(N,1);
-
-y = noise;
+if max(abs(y(:))) > 0
+    y = y / max(abs(y(:)));
+end
 end

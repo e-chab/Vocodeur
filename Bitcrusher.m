@@ -1,20 +1,44 @@
-function y = Lo_fi(x, bits)
-% Effet Lo-fi (bitcrusher) : réduit la résolution du signal
-% x : signal d'entrée
-% bits : nombre de bits de résolution (ex : 4, 8)
+function y = Bitcrusher(x, bits, downsampleFactor)
+% Effet Bitcrusher : réduction de la résolution + sous-échantillonnage
+% x : signal d'entrée (mono ou stéréo)
+% bits : profondeur de quantification (défaut : 6 bits)
+% downsampleFactor : maintien d'un échantillon sur N (défaut : 4)
 
-if nargin < 2, bits = 8; end
-x = x(:);
+if nargin < 2, bits = 6; end
+if nargin < 3, downsampleFactor = 4; end
 
-% Normalisation du signal entre -1 et 1
-x = x / max(abs(x));
+if downsampleFactor < 1
+    downsampleFactor = 1;
+end
 
-% Quantification
-levels = 2^bits;
-y = round(x * (levels/2 - 1)) / (levels/2 - 1);
+x = double(x);
+peak = max(abs(x(:)));
+if peak > 0
+    xNorm = x / peak;
+else
+    xNorm = x;
+end
 
-% Re-normalisation
-if max(abs(y)) > 0
-    y = y / max(abs(y));
+levels = max(2, 2^bits);
+quantized = round(xNorm * (levels/2 - 1)) / (levels/2 - 1);
+
+y = quantized;
+numSamples = size(y,1);
+numChannels = size(y,2);
+for ch = 1:numChannels
+    chan = y(:,ch);
+    for idx = 1:downsampleFactor:numSamples
+        blockEnd = min(idx + downsampleFactor - 1, numSamples);
+        chan(idx:blockEnd) = chan(idx);
+    end
+    y(:,ch) = chan;
+end
+
+if peak > 0
+    y = y * peak;
+end
+
+if max(abs(y(:))) > 0
+    y = y / max(abs(y(:)));
 end
 end

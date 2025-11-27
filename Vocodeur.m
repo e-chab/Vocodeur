@@ -12,7 +12,7 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 cfg = struct(...
-	'audioFile','Extrait.wav',...
+	'audioFile','ASK',...
 	'plotSpecWindow',128,...
 	'plotSpecOverlap',120,...
 	'plotSpecNfft',128,...
@@ -25,7 +25,8 @@ cfg = struct(...
 	'tempoFast',3/2,...
 	'pitchUp',[2 3],...
 	'pitchDown',[3 2],...
-	'robotFc',500);
+	'robotFc',500,...
+	'launchApp',false);
 
 % S'assurer que tous les effets custom sont accessibles
 scriptDir = fileparts(mfilename('fullpath'));
@@ -33,6 +34,19 @@ if ~isempty(scriptDir)
 	addpath(scriptDir);
 end
 
+clipLibrary = get_demo_clips(scriptDir);
+if isempty(clipLibrary)
+	error('Aucun extrait audio disponible dans le dossier du projet.');
+end
+
+selectedClip = selectClipFromLibrary(cfg.audioFile, clipLibrary, scriptDir);
+cfg.audioFile = selectedClip.path;
+fprintf('Clip charge : %s (%s)\n', selectedClip.label, selectedClip.file);
+
+if cfg.launchApp
+	MixeurDJApp;
+	return;
+end
 
 %% R�cup�ration d'un signal audio
 %--------------------------------
@@ -251,21 +265,40 @@ end
 %% 4- EFFETS SUPPLEMENTAIRES (BANQUE)
 %--------------------------------------
 if cfg.runExtras
+targetVoice = '';
+if ~isempty(scriptDir)
+	preferred = fullfile(scriptDir,'Evil_laugh_elise.wav');
+	if exist(preferred,'file') == 2
+		targetVoice = preferred;
+	else
+		alt = fullfile(scriptDir,'Evil Laugh.wav');
+		if exist(alt,'file') == 2
+			targetVoice = alt;
+		end
+	end
+end
+
 extraEffects = {
 	struct('name','Auto-wah','enabled',true,'fn',@(sig) Auto_wah(sig,Fs,300,2000,0.15)),
 	struct('name','Acapella','enabled',true,'fn',@(sig) Acapella(sig,Fs)),
-	struct('name','Chorus / Echo','enabled',true,'fn',@(sig) Chorus(sig,Fs,1,0.35,0.4)),
 	struct('name','Autotune simplifie','enabled',true,'fn',@(sig) Autotune(sig,Fs)),
-	struct('name','Hard clipping','enabled',true,'fn',@(sig) Distort_hard_clipping(sig,5,0.3)),
-	struct('name','Soft clipping','enabled',true,'fn',@(sig) Distort_soft_clipping(sig,Fs)),
+	struct('name','Bitcrusher','enabled',true,'fn',@(sig) Bitcrusher(sig,6,4)),
+	struct('name','Bruit blanc','enabled',true,'fn',@(sig) Bruit_blanc(sig,8,0.7)),
+	struct('name','Chorus / Echo','enabled',true,'fn',@(sig) Chorus(sig,Fs,1,0.35,0.4)),
 	struct('name','Flanger','enabled',true,'fn',@(sig) Flanger(sig,Fs)),
 	struct('name','Fuzz','enabled',true,'fn',@(sig) Fuzz(sig,8)),
 	struct('name','Granularize','enabled',true,'fn',@(sig) Granularize(sig,Fs)),
-	struct('name','Lo-fi Bitcrusher','enabled',true,'fn',@(sig) Lo_fi(sig,6)),
+	struct('name','Hard clipping','enabled',true,'fn',@(sig) Distort_hard_clipping(sig,5,0.3)),
+	struct('name','Lo-fi','enabled',true,'fn',@(sig) Lo_fi(sig,6)),
 	struct('name','Overdrive','enabled',true,'fn',@(sig) Overdrive(sig,Fs)),
 	struct('name','Phaser','enabled',true,'fn',@(sig) Phaser(sig,Fs,0.5,0.8)),
+	struct('name','Reverb large','enabled',true,'fn',@(sig) reverb(sig,Fs)),
+	struct('name','Reverb douce','enabled',true,'fn',@(sig) Reverb2(sig,Fs,0.7,0.5)),
+	struct('name','Ring mod','enabled',true,'fn',@(sig) RingMod(sig,Fs,150,0.85,0.8,0.3)),
+	struct('name','Soft clipping','enabled',true,'fn',@(sig) Distort_soft_clipping(sig,Fs)),
 	struct('name','Stereo movement','enabled',true,'fn',@(sig) Stereo_mov(sig,Fs)),
 	struct('name','Tremolo','enabled',true,'fn',@(sig) Tremolo(sig,Fs,4,0.6)),
+	struct('name','Transforme ma voix','enabled',~isempty(targetVoice),'fn',@(sig) transforme_vers_ma_voie(sig,Fs,targetVoice)),
 	struct('name','Vibrato','enabled',true,'fn',@(sig) Vibrato(sig,Fs,6,0.003)),
 	struct('name','Wah-wah','enabled',true,'fn',@(sig) Wah_wah(sig,Fs,1500,1800,700))
 };
@@ -302,6 +335,63 @@ if ~isempty(failedEffects)
 else
 	fprintf('\nTous les effets supplementaires ont ete joues avec succes.\n');
 end
+end
+
+function clip = selectClipFromLibrary(selection, library, scriptDir)
+%SELECLIP Choisit un extrait selon le parametre cfg.audioFile.
+if nargin < 3
+	scriptDir = '';
+end
+if isempty(library)
+	error('La bibliotheque d''extraits est vide.');
+end
+
+if nargin < 1 || isempty(selection)
+	selection = 1;
+end
+
+if ischar(selection) || (isstring(selection) && isscalar(selection))
+	selStr = string(selection);
+	if strcmpi(selStr,'ASK') || strcmpi(selStr,'MENU')
+		clip = promptClipChoice(library);
+		return;
+	end
+	idx = find(strcmpi({library.file}, selStr) | strcmpi({library.label}, selStr), 1);
+	if isempty(idx)
+		candidate = char(selStr);
+		if exist(candidate,'file') ~= 2 && ~isempty(scriptDir)
+			candidate = fullfile(scriptDir, candidate);
+		end
+		if exist(candidate,'file') == 2
+			[~, name, ext] = fileparts(candidate);
+			clip = struct('label', [name ext], 'file', [name ext], 'path', candidate);
+			return;
+		end
+		error('Fichier audio %s introuvable.', selStr);
+	end
+	clip = library(idx);
+	return;
+elseif isnumeric(selection) && isscalar(selection)
+	idx = round(selection);
+	idx = max(1, min(numel(library), idx));
+	clip = library(idx);
+	return;
+else
+	error('Format de selection %s non supporte.', class(selection));
+end
+end
+
+function clip = promptClipChoice(library)
+fprintf('\n=== Banque d''extraits disponibles ===\n');
+for k = 1:numel(library)
+	fprintf('%2d) %s\n', k, library(k).label);
+end
+resp = input('Choisissez un numero (Enter=1) : ','s');
+idx = str2double(resp);
+if isnan(idx) || idx < 1 || idx > numel(library)
+	idx = 1;
+end
+clip = library(idx);
 end
 
 function yout = localResample(y, p, q)

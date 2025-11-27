@@ -46,34 +46,58 @@ classdef MixeurDJApp < matlab.apps.AppBase
     methods (Access = private)
 
         function initCatalog(app)
+            scriptDir = fileparts(mfilename('fullpath'));
+            targetVoice = '';
+            if ~isempty(scriptDir)
+                preferred = fullfile(scriptDir,'Evil_laugh_elise.wav');
+                if exist(preferred,'file') == 2
+                    targetVoice = preferred;
+                else
+                    alt = fullfile(scriptDir,'Evil Laugh.wav');
+                    if exist(alt,'file') == 2
+                        targetVoice = alt;
+                    end
+                end
+            end
+            if isempty(targetVoice)
+                transformFn = @(sig,Fs) sig; % fallback si aucun fichier cible
+            else
+                transformFn = @(sig,Fs) transforme_vers_ma_voie(sig,Fs,targetVoice);
+            end
+
             app.effectCatalog = [
                 struct('name','Aucun','description','Signal original','fn',@(sig,Fs) sig)
                 struct('name','Robotize','description','Voix robotisée','fn',@(sig,Fs) Rob(sig,app.robotCarrier,Fs))
-                struct('name','Chorus','description','Largeur stéréo','fn',@(sig,Fs) Chorus(sig,Fs,1,0.35,0.4))
+                struct('name','Transforme ma voix','description','Rapproche de la voix cible','fn',transformFn)
+                struct('name','Acapella','description','Isolation de la voix','fn',@(sig,Fs) Acapella(sig,Fs))
+                struct('name','Autotune','description','Correction de justesse','fn',@(sig,Fs) Autotune(sig,Fs))
                 struct('name','Auto-wah','description','Filtre wah piloté','fn',@(sig,Fs) Auto_wah(sig,Fs,300,2000,0.15))
-                struct('name','Tremolo','description','Modulation volume','fn',@(sig,Fs) Tremolo(sig,Fs,4,0.8))
-                struct('name','Vibrato','description','Modulation pitch subtile','fn',@(sig,Fs) Vibrato(sig,Fs,6,0.003))
+                struct('name','Bitcrusher','description','Réduction résolution + rate','fn',@(sig,Fs) Bitcrusher(sig,6,4))
+                struct('name','Bruit blanc','description','Ajout d''un souffle contrôlé','fn',@(sig,Fs) Bruit_blanc(sig,8,0.7))
+                struct('name','Chorus','description','Largeur stéréo','fn',@(sig,Fs) Chorus(sig,Fs,1,0.35,0.4))
                 struct('name','Flanger','description','Jet d''avion','fn',@(sig,Fs) Flanger(sig,Fs))
-                struct('name','Phaser','description','Balayage de phase','fn',@(sig,Fs) Phaser(sig,Fs,0.5,0.8))
+                struct('name','Fuzz','description','Distorsion extrême','fn',@(sig,Fs) Fuzz(sig,10))
                 struct('name','Granularize','description','Texture granulaire','fn',@(sig,Fs) Granularize(sig,Fs))
-                struct('name','Overdrive','description','Saturation douce','fn',@(sig,Fs) Overdrive(sig,Fs))
                 struct('name','Hard Clip','description','Distorsion dure','fn',@(sig,Fs) Distort_hard_clipping(sig,6,0.35))
+                struct('name','Lo-fi','description','Quantification agressive','fn',@(sig,Fs) Lo_fi(sig,6))
+                struct('name','Overdrive','description','Saturation douce','fn',@(sig,Fs) Overdrive(sig,Fs))
+                struct('name','Phaser','description','Balayage de phase','fn',@(sig,Fs) Phaser(sig,Fs,0.5,0.8))
+                struct('name','Reverb large','description','Salle brillante','fn',@(sig,Fs) reverb(sig,Fs))
+                struct('name','Reverb douce','description','Queue lissée','fn',@(sig,Fs) Reverb2(sig,Fs,0.7,0.5))
+                struct('name','Ring Mod','description','Voix metallique','fn',@(sig,Fs) RingMod(sig,Fs,150,0.85,0.8,0.3))
                 struct('name','Soft Clip','description','Distorsion douce','fn',@(sig,Fs) Distort_soft_clipping(sig,Fs))
                 struct('name','Stereo Move','description','Balayage gauche-droite','fn',@(sig,Fs) Stereo_mov(sig,Fs))
-                struct('name','Lo-fi','description','Bitcrusher','fn',@(sig,Fs) Lo_fi(sig,6))
+                struct('name','Tremolo','description','Modulation volume','fn',@(sig,Fs) Tremolo(sig,Fs,4,0.8))
+                struct('name','Vibrato','description','Modulation pitch subtile','fn',@(sig,Fs) Vibrato(sig,Fs,6,0.003))
                 struct('name','Wah-Wah','description','Filtre wah classique','fn',@(sig,Fs) Wah_wah(sig,Fs,1500,1800,700))
             ];
         end
 
         function initFileList(app)
             scriptDir = fileparts(mfilename('fullpath'));
-            defaults = {'Extrait.wav','Diner.wav','Halleluia.wav'};
-            entries = struct('label',{},'path',{});
-            for k = 1:numel(defaults)
-                candidate = fullfile(scriptDir, defaults{k});
-                if exist(candidate,'file') == 2
-                    entries(end+1) = struct('label',defaults{k},'path',candidate); %#ok<AGROW>
-                end
+            entries = get_demo_clips(scriptDir);
+            if isempty(entries)
+                entries = struct('label',{},'path',{},'file',{});
             end
             app.fileEntries = entries;
             refreshFileList(app, 1);
@@ -139,7 +163,7 @@ classdef MixeurDJApp < matlab.apps.AppBase
                 return;
             end
             fullPath = fullfile(path,file);
-            app.fileEntries(end+1) = struct('label',file,'path',fullPath);
+            app.fileEntries(end+1) = struct('label',file,'path',fullPath,'file',file);
             refreshFileList(app, numel(app.fileEntries));
         end
 
@@ -157,7 +181,7 @@ classdef MixeurDJApp < matlab.apps.AppBase
         end
 
         function deleteAll(app)
-            app.fileEntries = struct('label',{},'path',{});
+            app.fileEntries = struct('label',{},'path',{},'file',{});
             refreshFileList(app, []);
         end
 
@@ -432,11 +456,11 @@ classdef MixeurDJApp < matlab.apps.AppBase
 
         function createEffectButtons(app)
             numEffects = numel(app.effectCatalog);
-            cols = 3;
+            cols = 4;
             rows = ceil(numEffects/cols);
-            btnWidth = 120; btnHeight = 35;
+            btnWidth = 115; btnHeight = 35;
             spacingX = 10; spacingY = 10;
-            startX = 20; startY = rows*(btnHeight+spacingY);
+            startX = 20; startY = min(rows*(btnHeight+spacingY), app.EffectPanel.Position(4) - btnHeight - 10);
             app.effectButtons = matlab.ui.control.Button.empty;
             for k = 1:numEffects
                 row = floor((k-1)/cols);

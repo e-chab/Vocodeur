@@ -1,69 +1,203 @@
 function y = transforme_vers_ma_voie(x, Fs, cible_file)
-% y = transforme_vers_ma_voie(x, Fs, cible_file)
-% Transforme la voix d'entrée x pour qu'elle ressemble à la voix cible (ex: Evil_laugh_elise.wav)
-% x : signal à transformer
+% Transforme une voix source pour se rapprocher d'une voix cible
+% x : voix source
 % Fs : fréquence d'échantillonnage
-% cible_file : nom du fichier audio de la voix cible
-%
-% Etapes :
-% 1. Analyse de la voix cible (hauteur, formants)
-% 2. Pitch shifting et filtrage des formants sur x
+% cible_file : chemin vers la voix cible (optionnel)
 
-% Lecture de la voix cible
-[cible, Fs2] = audioread(cible_file);
-if Fs2 ~= Fs
-    cible = resample(cible, Fs, Fs2);
+if nargin < 3 || isempty(cible_file)
+    localDir = fileparts(mfilename('fullpath'));
+    candidates = { ...
+        fullfile(localDir, 'Evil_laugh_elise.wav'), ...
+        fullfile(localDir, 'Evil Laugh.wav')};
+    cible_file = '';
+    for k = 1:numel(candidates)
+        if exist(candidates{k},'file') == 2
+            cible_file = candidates{k};
+            break;
+        end
+    end
+    if isempty(cible_file)
+        error('Aucun fichier cible trouve pour l''effet transforme_vers_ma_voie.');
+    end
 end
-cible = cible(:,1); % Mono
-x = x(:,1); % Mono
 
-% 1. Estimation de la hauteur fondamentale (pitch) par autocorrélation
-pitch_cible = estimate_pitch(cible, Fs);
-pitch_source = estimate_pitch(x, Fs);
+[cible, FsCible] = audioread(cible_file);
+cible = localEnsureMono(cible);
+x = localEnsureMono(x);
 
-% 2. Calcul du facteur de transposition
-facteur = pitch_cible / pitch_source;
+if FsCible ~= Fs
+    cible = localResampleMatch(cible, FsCible, Fs);
+end
 
-% 3. Pitch shifting
+pitchCible = estimate_pitch(cible, Fs);
+pitchSource = estimate_pitch(x, Fs);
+
+facteur = pitchCible / max(pitchSource, eps);
+if ~isfinite(facteur) || facteur <= 0
+    facteur = 1;
+end
+
 Nfft = 1024;
-Nwind = 1024;
-x_shifted = PVoc(x, facteur, Nfft, Nwind);
-if length(x_shifted) ~= length(x)
-    % Interpolation linéaire pour ajuster la durée
-    x_shifted = interp1(linspace(0,1,length(x_shifted)), x_shifted, linspace(0,1,length(x)), 'linear');
+x_shifted = PVoc(x, facteur, Nfft, Nfft);
+x_shifted = localMatchLength(x_shifted, numel(x));
+
+formants = localEstimateFormants(cible, Fs, 3);
+if isempty(formants)
+    formants = [500 1500 2500];
 end
 
-% 4. Estimation des formants principaux de la voix cible
-[S,F] = periodogram(cible,[],[],Fs);
-[~,formant_idx] = findpeaks(S,'NPeaks',3,'SortStr','descend');
-formant_freqs = F(formant_idx);
-if length(formant_freqs) < 3
-    formant_freqs = [500 1500 2500]; % Valeurs par défaut si estimation échoue
+y = x_shifted;
+for f0 = formants
+    bw = max(120, 0.25 * f0);
+    fLow = max(80, f0 - bw/2);
+    fHigh = min(Fs/2 - 100, f0 + bw/2);
+    if fHigh <= fLow
+        continue;
+    end
+    [b, a] = localBandpassRBJ(fLow, fHigh, Fs);
+    y = filter(b, a, y);
 end
 
-% 5. Filtrage passe-bande autour des formants principaux
-bpFilt = designfilt('bandpassiir','FilterOrder',6, ...
-    'HalfPowerFrequency1',max(50,formant_freqs(1)-100), ...
-    'HalfPowerFrequency2',min(Fs/2-1,formant_freqs(end)+100), ...
-    'SampleRate',Fs);
-
-y = filter(bpFilt, x_shifted);
-
-% 6. Normalisation
-y = y / max(abs(y));
+if max(abs(y)) > 0
+    y = y / max(abs(y));
+end
 end
 
 function f0 = estimate_pitch(sig, Fs)
-% Estimation simple de la fréquence fondamentale par autocorrélation
-sig = sig - mean(sig);
-[R, lags] = xcorr(sig, 'coeff');
-R = R(lags >= 0);
-lags = lags(lags >= 0);
-[min_lag, max_lag] = deal(round(Fs/500), round(Fs/50)); % Plage typique voix humaine (50-500 Hz)
-search_range = R(min_lag:max_lag);
-[~, idx] = max(search_range);
-f0 = Fs / (min_lag + idx - 1);
-if isnan(f0) || isinf(f0) || f0 < 50 || f0 > 500
-    f0 = 120; % Valeur par défaut raisonnable
+sig = sig(:) - mean(sig);
+if all(sig == 0)
+    f0 = 120;
+    return;
 end
+[R, lags] = xcorr(sig, 'coeff');
+mask = lags >= 0;
+R = R(mask);
+lags = lags(mask);
+minLag = max(1, round(Fs/500));
+maxLag = min(numel(lags), round(Fs/50));
+if maxLag <= minLag
+    f0 = 120;
+    return;
+end
+segment = R(minLag:maxLag);
+[~, idx] = max(segment);
+lagVal = minLag + idx - 1;
+f0 = Fs / lagVal;
+if isnan(f0) || isinf(f0) || f0 < 50 || f0 > 500
+    f0 = 120;
+end
+end
+
+function sig = localEnsureMono(sig)
+if isempty(sig)
+    sig = zeros(0,1);
+    return;
+end
+if size(sig,2) > 1
+    sig = mean(sig,2);
+end
+sig = sig(:);
+end
+
+function y = localResampleMatch(sig, FsIn, FsOut)
+if isempty(sig)
+    y = sig;
+    return;
+end
+duration = (numel(sig)-1)/FsIn;
+if duration <= 0
+    y = sig;
+    return;
+end
+tOriginal = linspace(0, duration, numel(sig));
+targetSamples = max(2, round(duration * FsOut) + 1);
+tTarget = linspace(0, duration, targetSamples);
+y = interp1(tOriginal, sig, tTarget, 'linear');
+y = y(:);
+end
+
+function out = localMatchLength(sig, targetLen)
+if isempty(sig)
+    out = sig;
+    return;
+end
+currentLen = numel(sig);
+if currentLen == targetLen
+    out = sig(:);
+    return;
+end
+tOriginal = linspace(0, 1, currentLen);
+tTarget = linspace(0, 1, targetLen);
+out = interp1(tOriginal, sig(:).', tTarget, 'linear');
+out = out(:);
+end
+
+function formants = localEstimateFormants(sig, Fs, nFormants)
+sig = sig(:);
+if isempty(sig)
+    formants = [];
+    return;
+end
+sig = sig - mean(sig);
+N = length(sig);
+Nfft = 2^nextpow2(min(max(2048, N), 16384));
+win = 0.5 - 0.5*cos(2*pi*(0:N-1)/(max(N-1,1)));
+segment = sig(1:min(N, Nfft));
+if numel(segment) < numel(win)
+    win = win(1:numel(segment));
+end
+segment = segment(:) .* win(:);
+padded = zeros(Nfft,1);
+padded(1:numel(segment)) = segment;
+spec = abs(fft(padded)).^2;
+freqAxis = (0:Nfft-1)*(Fs/Nfft);
+mask = freqAxis >= 150 & freqAxis <= min(4000, Fs/2 - 50);
+freqAxis = freqAxis(mask);
+mag = spec(mask);
+if isempty(mag)
+    formants = [];
+    return;
+end
+smoothed = localMovingAverage(mag, 9);
+working = smoothed;
+formants = zeros(1, nFormants);
+binWidth = Fs / Nfft;
+for k = 1:nFormants
+    [peakVal, idx] = max(working);
+    if peakVal <= 0
+        formants = formants(1:k-1);
+        break;
+    end
+    formants(k) = freqAxis(idx);
+    guard = round(150 / binWidth);
+    idxStart = max(1, idx - guard);
+    idxEnd = min(numel(working), idx + guard);
+    working(idxStart:idxEnd) = 0;
+end
+formants = formants(formants > 0);
+end
+
+function y = localMovingAverage(x, win)
+win = max(1, round(win));
+kernel = ones(win,1)/win;
+y = conv(x, kernel, 'same');
+end
+
+function [b, a] = localBandpassRBJ(fLow, fHigh, Fs)
+center = sqrt(fLow * fHigh);
+bandwidth = max(fHigh - fLow, 10);
+Q = center / bandwidth;
+if Q <= 0
+    Q = 0.5;
+end
+w0 = 2*pi*center/Fs;
+alpha = sin(w0)/(2*Q);
+b0 = alpha;
+b1 = 0;
+b2 = -alpha;
+a0 = 1 + alpha;
+a1 = -2*cos(w0);
+a2 = 1 - alpha;
+b = [b0/a0, b1/a0, b2/a0];
+a = [1, a1/a0, a2/a0];
 end
