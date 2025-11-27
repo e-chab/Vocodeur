@@ -1,4 +1,4 @@
-function y = phaser(x, Fs, rate, depth)
+function y = Phaser(x, Fs, rate, depth)
 % Effet phaser : balayage de phase sur le signal
 % x : signal d'entrée
 % Fs : fréquence d'échantillonnage

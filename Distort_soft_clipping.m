@@ -1,4 +1,4 @@
-function y = Distort_soft(x, Fs)
+function y = Distort_soft_clipping(x, ~)
 % Effet Distort_soft : distorsion douce (soft clipping) par fonction non linéaire
 % x : signal d'entrée à distordre
 % Fs : fréquence d'échantillonnage

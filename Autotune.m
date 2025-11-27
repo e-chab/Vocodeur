@@ -1,4 +1,4 @@
-function y = autotune(x, Fs)
+function y = Autotune(x, Fs)
 % Effet autotune simple pour voix
 % x : signal d entrée
 % Fs : fréquence d échantillonnage
@@ -16,7 +16,7 @@ notes = 440 * 2.^(([0:11]-9)/12); % La gamme chromatique autour de 440 Hz
 % Initialisation du signal de sortie
 y = zeros(size(x));
 
-window = hann(window_size); % Fenêtre Hann pour lisser
+window = localHann(window_size);
 crossfade = linspace(0,1,hop_size)'; % Fondu croissant
 for i = 1:hop_size:length(x)-window_size
     segment = x(i:i+window_size-1);
@@ -70,4 +70,10 @@ else
     y = y(1:N);
 end
 y = y(:);
+end
+
+function w = localHann(N)
+% Fenêtre Hann sans toolbox
+n = (0:N-1)';
+w = 0.5 - 0.5*cos(2*pi*n/(N-1));
 end

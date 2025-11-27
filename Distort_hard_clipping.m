@@ -1,4 +1,4 @@
-function y = Distort1(x, gain, threshold)
+function y = Distort_hard_clipping(x, gain, threshold)
 % Effet Distort1 : distorsion dure par hard clipping
 % x : signal d'entrée (mono ou stéréo)
 % gain : amplification avant distorsion (défaut : 5)
