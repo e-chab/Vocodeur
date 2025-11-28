@@ -49,6 +49,7 @@ classdef MixeurDJApp < matlab.apps.AppBase
             app.effectCatalog = [
                 struct('name','Aucun','description','Signal original','fn',@(sig,Fs) sig)
                 struct('name','Robotize','description','Voix robotisée','fn',@(sig,Fs) Rob(sig,app.robotCarrier,Fs))
+                struct('name','Alien','description','Pitch up + robotize','fn',@(sig,Fs) Alien(sig,Fs))
                 struct('name','Chorus','description','Largeur stéréo','fn',@(sig,Fs) Chorus(sig,Fs,1,0.35,0.4))
                 struct('name','Auto-wah','description','Filtre wah piloté','fn',@(sig,Fs) Auto_wah(sig,Fs,300,2000,0.15))
                 struct('name','Tremolo','description','Modulation volume','fn',@(sig,Fs) Tremolo(sig,Fs,4,0.8))
@@ -64,6 +65,7 @@ classdef MixeurDJApp < matlab.apps.AppBase
                 struct('name','Stereo Move','description','Balayage gauche-droite','fn',@(sig,Fs) Stereo_mov(sig,Fs))
                 struct('name','Bitcrusher','description','Bitcrusher','fn',@(sig,Fs) Bitcrusher(sig,6))
                 struct('name','Wah-Wah','description','Filtre wah classique','fn',@(sig,Fs) Wah_wah(sig,Fs,1500,1800,700))
+                struct('name','Reverse','description','Inverse le son','fn',@(sig,Fs) Reverse(sig,Fs))
             ];
         end
 
