@@ -11,6 +11,7 @@ y = flipud(x); % Inverse le signal
 
 end
 
+<<<<<<< HEAD
 
 
 [x, fs] = audioread('C:\Users\yoane\Downloads\Vocodeur-main\Pink_Floyd-Empty_Spaces backwards_message.wav'); % Chemin correct requis
@@ -80,3 +81,5 @@ close(gcf);
 
 [x,Fs] = audioread('Extrait.wav'); % ou un autre fichier qui est dans ton dossier
 yReverse = Reverse(x, Fs);
+=======
+>>>>>>> 7ac15041630be80d00e35a6b54888bf5841daa56

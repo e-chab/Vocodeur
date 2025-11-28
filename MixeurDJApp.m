@@ -70,9 +70,14 @@ classdef MixeurDJApp < matlab.apps.AppBase
             app.effectCatalog = [
                 struct('name','Aucun','description','Signal original','fn',@(sig,Fs) sig)
                 struct('name','Robotize','description','Voix robotisée','fn',@(sig,Fs) Rob(sig,app.robotCarrier,Fs))
+<<<<<<< HEAD
                 struct('name','Transforme ma voix','description','Rapproche de la voix cible','fn',transformFn)
                 struct('name','Acapella','description','Isolation de la voix','fn',@(sig,Fs) Acapella(sig,Fs))
                 struct('name','Autotune','description','Correction de justesse','fn',@(sig,Fs) Autotune(sig,Fs))
+=======
+                struct('name','Alien','description','Pitch up + robotize','fn',@(sig,Fs) Alien(sig,Fs))
+                struct('name','Chorus','description','Largeur stéréo','fn',@(sig,Fs) Chorus(sig,Fs,1,0.35,0.4))
+>>>>>>> 7ac15041630be80d00e35a6b54888bf5841daa56
                 struct('name','Auto-wah','description','Filtre wah piloté','fn',@(sig,Fs) Auto_wah(sig,Fs,300,2000,0.15))
                 struct('name','Bitcrusher','description','Réduction résolution + rate','fn',@(sig,Fs) Bitcrusher(sig,6,4))
                 struct('name','Bruit blanc','description','Ajout d''un souffle contrôlé','fn',@(sig,Fs) Bruit_blanc(sig,8,0.7))
@@ -91,13 +96,18 @@ classdef MixeurDJApp < matlab.apps.AppBase
                 struct('name','Tremolo','description','Modulation volume','fn',@(sig,Fs) Tremolo(sig,Fs,4,0.8))
                 struct('name','Vibrato','description','Modulation pitch subtile','fn',@(sig,Fs) Vibrato(sig,Fs,6,0.003))
                 struct('name','Wah-Wah','description','Filtre wah classique','fn',@(sig,Fs) Wah_wah(sig,Fs,1500,1800,700))
+<<<<<<< HEAD
                 struct('name','Reverse','description','Lecture à l''envers','fn',@(sig,Fs) localReverse(sig))
                 struct('name','Alien','description','Voix extraterrestre','fn',@(sig,Fs) localAlien(sig,Fs))
+=======
+                struct('name','Reverse','description','Inverse le son','fn',@(sig,Fs) Reverse(sig,Fs))
+>>>>>>> 7ac15041630be80d00e35a6b54888bf5841daa56
             ];
         end
 
         function initFileList(app)
             scriptDir = fileparts(mfilename('fullpath'));
+<<<<<<< HEAD
             entries = get_demo_clips(scriptDir);
             % Ajout manuel des extraits demandés
             extraFiles = {
@@ -108,6 +118,19 @@ classdef MixeurDJApp < matlab.apps.AppBase
             entries = [entries, extraFiles{:}];
             if isempty(entries)
                 entries = struct('label',{},'path',{},'file',{});
+=======
+            entries = struct('label',{},'path',{});
+            wavFiles = dir(fullfile(scriptDir, '*.wav'));
+            for k = 1:numel(wavFiles)
+                file = wavFiles(k);
+                entries(end+1) = struct('label',file.name,'path',fullfile(scriptDir,file.name)); %#ok<AGROW>
+            end
+            % Si aucun fichier trouvé dans le dossier du script, ne pas planter
+            if isempty(entries)
+                app.FileListBox.Items = {'<vide>'};
+                app.FileListBox.ItemsData = 0;
+                app.FileListBox.Value = 0;
+>>>>>>> 7ac15041630be80d00e35a6b54888bf5841daa56
             end
             app.fileEntries = entries;
             refreshFileList(app, 1);
