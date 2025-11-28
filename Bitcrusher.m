@@ -4,14 +4,17 @@ function y = Bitcrusher(x, bits, downsampleFactor)
 % bits : profondeur de quantification (défaut : 6 bits)
 % downsampleFactor : maintien d'un échantillon sur N (défaut : 4)
 
-if nargin < 2, bits = 6; end
-if nargin < 3, downsampleFactor = 4; end
+if nargin < 2 || isempty(bits), bits = 6; end
+if nargin < 3 || isempty(downsampleFactor), downsampleFactor = 4; end
 
 if downsampleFactor < 1
     downsampleFactor = 1;
 end
 
 x = double(x);
+if isvector(x)
+    x = x(:); % garantit une colonne pour les signaux mono
+end
 peak = max(abs(x(:)));
 if peak > 0
     xNorm = x / peak;

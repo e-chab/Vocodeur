@@ -25,6 +25,7 @@ classdef MixeurDJApp < matlab.apps.AppBase
         AnimationAxes       matlab.ui.control.UIAxes
         LiveAxes            matlab.ui.control.UIAxes
     end
+
     properties (Access = private)
         fileEntries struct
         effectCatalog struct
@@ -43,6 +44,7 @@ classdef MixeurDJApp < matlab.apps.AppBase
         playbackBuffer double
         playbackFs double = 0
     end
+
     methods (Access = private)
 
         function initCatalog(app)
@@ -78,24 +80,32 @@ classdef MixeurDJApp < matlab.apps.AppBase
                 struct('name','Flanger','description','Jet d''avion','fn',@(sig,Fs) Flanger(sig,Fs))
                 struct('name','Fuzz','description','Distorsion extrême','fn',@(sig,Fs) Fuzz(sig,10))
                 struct('name','Granularize','description','Texture granulaire','fn',@(sig,Fs) Granularize(sig,Fs))
-                struct('name','Hard Clip','description','Distorsion dure','fn',@(sig,Fs) Distort_hard_clipping(sig,6,0.35))
-                struct('name','Lo-fi','description','Quantification agressive','fn',@(sig,Fs) Lo_fi(sig,6))
+                struct('name','Hard Clip','description','Distorsion dure','fn',@(sig,Fs) Distort_hard(sig,6,0.35))
                 struct('name','Overdrive','description','Saturation douce','fn',@(sig,Fs) Overdrive(sig,Fs))
                 struct('name','Phaser','description','Balayage de phase','fn',@(sig,Fs) Phaser(sig,Fs,0.5,0.8))
-                struct('name','Reverb large','description','Salle brillante','fn',@(sig,Fs) reverb(sig,Fs))
-                struct('name','Reverb douce','description','Queue lissée','fn',@(sig,Fs) Reverb2(sig,Fs,0.7,0.5))
+                struct('name','Reverb large','description','Salle brillante','fn',@(sig,Fs) reverb_forte(sig,Fs))
+                struct('name','Reverb douce','description','Queue lissée','fn',@(sig,Fs) reverb_douce(sig,Fs,0.7,0.5))
                 struct('name','Ring Mod','description','Voix metallique','fn',@(sig,Fs) RingMod(sig,Fs,150,0.85,0.8,0.3))
-                struct('name','Soft Clip','description','Distorsion douce','fn',@(sig,Fs) Distort_soft_clipping(sig,Fs))
+                struct('name','Soft Clip','description','Distorsion douce','fn',@(sig,Fs) Distort_soft(sig,Fs))
                 struct('name','Stereo Move','description','Balayage gauche-droite','fn',@(sig,Fs) Stereo_mov(sig,Fs))
                 struct('name','Tremolo','description','Modulation volume','fn',@(sig,Fs) Tremolo(sig,Fs,4,0.8))
                 struct('name','Vibrato','description','Modulation pitch subtile','fn',@(sig,Fs) Vibrato(sig,Fs,6,0.003))
                 struct('name','Wah-Wah','description','Filtre wah classique','fn',@(sig,Fs) Wah_wah(sig,Fs,1500,1800,700))
+                struct('name','Reverse','description','Lecture à l''envers','fn',@(sig,Fs) localReverse(sig))
+                struct('name','Alien','description','Voix extraterrestre','fn',@(sig,Fs) localAlien(sig,Fs))
             ];
         end
 
         function initFileList(app)
             scriptDir = fileparts(mfilename('fullpath'));
             entries = get_demo_clips(scriptDir);
+            % Ajout manuel des extraits demandés
+            extraFiles = {
+                struct('label','pink_floyd.wav','path',fullfile(scriptDir,'pink_floyd.wav'),'file','pink_floyd.wav')
+                struct('label','evil_laugh.wav','path',fullfile(scriptDir,'evil_laugh.wav'),'file','evil_laugh.wav')
+                struct('label','evil_laugh_elise.wav','path',fullfile(scriptDir,'evil_laugh_elise.wav'),'file','evil_laugh_elise.wav')
+            };
+            entries = [entries, extraFiles{:}];
             if isempty(entries)
                 entries = struct('label',{},'path',{},'file',{});
             end
@@ -221,59 +231,50 @@ classdef MixeurDJApp < matlab.apps.AppBase
 
         function handlePlay(app)
             fprintf('[MixeurDJApp] handlePlay invoked\n');
+
+            % Si aucun signal n'est encore chargé, on prend celui sélectionné
             if (isempty(app.currentSignal) || app.currentFs <= 0) && ...
                     ~isempty(app.fileEntries) && ~isempty(app.FileListBox.Value) && app.FileListBox.Value > 0
                 previewSelection(app);
             end
+
+            % Toujours rien ? On abandonne
             if isempty(app.currentSignal) || app.currentFs <= 0
                 app.StatusLabel.Text = 'Chargez un extrait valide avant lecture';
                 fprintf('[MixeurDJApp] abort: aucun signal charge\n');
                 return;
             end
+
             try
                 app.StatusLabel.Text = 'Preparation lecture...';
                 drawnow limitrate;
+
                 fprintf('[MixeurDJApp] arret de la lecture precedente\n');
                 stopAudio(app, true);
+
+                % Chaîne vitesse/pitch + effet avancé
                 processed = processChain(app, app.currentSignal, app.currentFs);
-                if isempty(processed)
-                    app.StatusLabel.Text = 'Traitement vide, verifiez l''effet choisi';
-                    fprintf('[MixeurDJApp] abort: traitement vide\n');
-                    return;
-                end
-                if any(~isfinite(processed))
-                    app.StatusLabel.Text = 'Traitement invalide (NaN/Inf)';
-                    fprintf('[MixeurDJApp] abort: traitement NaN/Inf\n');
-                    return;
-                end
-                processed = processed(:);
+
+                % Mise à jour des tampons de lecture
                 app.playbackBuffer = processed;
                 app.playbackFs = app.currentFs;
-                fprintf('[MixeurDJApp] creation audioplayer (%d echantillons, Fs=%g)\n', numel(processed), app.currentFs);
+
+                % Création du player audio
                 app.player = audioplayer(processed, app.currentFs);
-                app.player.StopFcn = @(src,evt) onPlaybackFinished(app);
-                fprintf('[MixeurDJApp] lancement animation et lecture\n');
+                app.player.StopFcn = @(~,~) stopAudio(app,true);
+
+                % Animations + waveform live
+                resetLiveWaveform(app);
                 startAnimation(app);
                 startLiveWaveform(app);
-                play(app.player);
-                fprintf('[MixeurDJApp] play() retourne sans erreur\n');
-                app.StatusLabel.Text = sprintf('Lecture : %s + %s', app.fileEntries(app.FileListBox.Value).label, app.selectedEffect);
-            catch ME
-                stopAudio(app, true);
-                app.StatusLabel.Text = sprintf('Erreur lecture : %s', ME.message);
-                fprintf('MixeurDJApp playback error:\n%s\n', getReport(ME, 'extended', 'hyperlinks', 'off'));
-            end
-        end
 
-        function onPlaybackFinished(app)
-            stopAnimation(app);
-            stopLiveWaveform(app);
-            app.player = [];
-            app.playbackBuffer = [];
-            app.playbackFs = 0;
-            resetLiveWaveform(app);
-            if ~isempty(app.StatusLabel) && isvalid(app.StatusLabel)
-                app.StatusLabel.Text = 'Lecture terminee';
+                % Lecture
+                play(app.player);
+                app.StatusLabel.Text = sprintf('Lecture en cours (%s)', app.selectedEffect);
+
+            catch ME
+                app.StatusLabel.Text = sprintf('Erreur lecture : %s', ME.message);
+                warning('[MixeurDJApp] %s', ME.message);
             end
         end
 
@@ -435,16 +436,23 @@ classdef MixeurDJApp < matlab.apps.AppBase
         end
 
         function y = processChain(app, sig, Fs)
+            % Chaîne de traitement : speed -> pitch -> effet choisi
             y = sig;
+
+            % Time-stretching (vitesse)
             if abs(app.speedValue - 1) > 1e-3
                 y = PVoc(y, app.speedValue, 1024, 1024);
             end
+
+            % Pitch-shifting
             if abs(app.pitchValue - 1) > 1e-3
                 y = PVoc(y, app.pitchValue, 256, 256);
                 y = localResampleApp(y, app.pitchValue, 1);
             end
-            idx = find(strcmp({app.effectCatalog.name}, app.selectedEffect),1);
-            if isempty(idx) || idx == 1
+
+            % Effet avancé (Alien, Reverse, etc.)
+            idx = find(strcmp({app.effectCatalog.name}, app.selectedEffect), 1);
+            if isempty(idx) || idx == 1   % "Aucun" ou pas trouvé
                 return;
             end
             try
@@ -455,26 +463,44 @@ classdef MixeurDJApp < matlab.apps.AppBase
         end
 
         function createEffectButtons(app)
-            numEffects = numel(app.effectCatalog);
-            cols = 4;
-            rows = ceil(numEffects/cols);
-            btnWidth = 115; btnHeight = 35;
-            spacingX = 10; spacingY = 10;
-            startX = 20; startY = min(rows*(btnHeight+spacingY), app.EffectPanel.Position(4) - btnHeight - 10);
-            app.effectButtons = matlab.ui.control.Button.empty;
-            for k = 1:numEffects
-                row = floor((k-1)/cols);
-                col = mod((k-1), cols);
-                btn = uibutton(app.EffectPanel,'push');
-                btn.Position = [startX + col*(btnWidth+spacingX), startY - row*(btnHeight+spacingY), btnWidth, btnHeight];
-                btn.Text = app.effectCatalog(k).name;
-                btn.BackgroundColor = [0.2 0.2 0.2];
-                btn.FontColor = [0.95 0.95 0.95];
-                btn.ButtonPushedFcn = @(src,evt) selectEffect(app, k);
-                app.effectButtons(k) = btn;
-            end
-            selectEffect(app,1);
-        end
+    numEffects = numel(app.effectCatalog);
+    cols = 4;
+    rows = ceil(numEffects/cols);
+
+    btnWidth  = 115;
+    btnHeight = 35;
+    spacingX  = 10;
+    spacingY  = 10;
+    startX    = 20;
+
+    % --- Laisser une marge pour le titre du panel ---
+    panelHeight  = app.EffectPanel.Position(4);
+    titleOffset  = 40;            % espace réservé pour "Launch an effect"
+    startY       = panelHeight - btnHeight - titleOffset;
+
+    app.effectButtons = matlab.ui.control.Button.empty;
+
+    for k = 1:numEffects
+        row = floor((k-1)/cols);
+        col = mod((k-1), cols);
+
+        xPos = startX + col * (btnWidth  + spacingX);
+        yPos = startY - row * (btnHeight + spacingY);
+
+        btn = uibutton(app.EffectPanel,'push');
+        btn.Position        = [xPos, yPos, btnWidth, btnHeight];
+        btn.Text            = app.effectCatalog(k).name;
+        btn.BackgroundColor = [0.2 0.2 0.2];
+        btn.FontColor       = [0.95 0.95 0.95];
+        btn.ButtonPushedFcn = @(src,evt) selectEffect(app, k);
+
+        app.effectButtons(k) = btn;
+    end
+
+    % Sélection par défaut
+    selectEffect(app,1);
+end
+
 
         function createComponents(app)
             app.UIFigure = uifigure('Name','VOXCOD Mixdesk');
@@ -508,11 +534,13 @@ classdef MixeurDJApp < matlab.apps.AppBase
             app.DeleteAllButton.Position = [30 265 260 35];
             app.DeleteAllButton.ButtonPushedFcn = @(src,evt) deleteAll(app);
 
-            app.PlayButton = uibutton(app.UIFigure,'push','Text','Play','BackgroundColor',[0.2 0.5 0.2],'FontColor',[1 1 1]);
+            app.PlayButton = uibutton(app.UIFigure,'push','Text','Play', ...
+                'BackgroundColor',[0.2 0.5 0.2],'FontColor',[1 1 1]);
             app.PlayButton.Position = [30 205 120 45];
             app.PlayButton.ButtonPushedFcn = @(src,evt) handlePlay(app);
 
-            app.StopButton = uibutton(app.UIFigure,'push','Text','Stop','BackgroundColor',[0.6 0.2 0.2],'FontColor',[1 1 1]);
+            app.StopButton = uibutton(app.UIFigure,'push','Text','Stop', ...
+                'BackgroundColor',[0.6 0.2 0.2],'FontColor',[1 1 1]);
             app.StopButton.Position = [170 205 120 45];
             app.StopButton.ButtonPushedFcn = @(src,evt) stopAudio(app);
 
@@ -522,7 +550,8 @@ classdef MixeurDJApp < matlab.apps.AppBase
             app.SpeedSlider = uislider(speedPanel,'Limits',[0.5 1.8],'Value',1);
             app.SpeedSlider.Position = [15 30 260 3];
             app.SpeedSlider.ValueChangedFcn = @(src,evt) updateSpeed(app, src.Value);
-            app.SpeedValueLabel = uilabel(speedPanel,'Text','1.00x','FontWeight','bold','FontColor',[0.9 0.9 1]);
+            app.SpeedValueLabel = uilabel(speedPanel,'Text','1.00x', ...
+                'FontWeight','bold','FontColor',[0.9 0.9 1]);
             app.SpeedValueLabel.Position = [290 18 70 22];
 
             pitchPanel = uipanel(app.UIFigure,'Title','Set Pitch','FontWeight','bold', ...
@@ -531,7 +560,8 @@ classdef MixeurDJApp < matlab.apps.AppBase
             app.PitchSlider = uislider(pitchPanel,'Limits',[0.5 1.8],'Value',1);
             app.PitchSlider.Position = [15 30 260 3];
             app.PitchSlider.ValueChangedFcn = @(src,evt) updatePitch(app, src.Value);
-            app.PitchValueLabel = uilabel(pitchPanel,'Text','1.00x','FontWeight','bold','FontColor',[0.9 0.9 1]);
+            app.PitchValueLabel = uilabel(pitchPanel,'Text','1.00x', ...
+                'FontWeight','bold','FontColor',[0.9 0.9 1]);
             app.PitchValueLabel.Position = [290 18 70 22];
 
             app.EffectPanel = uipanel(app.UIFigure,'Title','Launch an effect','FontSize',16);
@@ -587,7 +617,8 @@ classdef MixeurDJApp < matlab.apps.AppBase
             app.PitchValueLabel.Text = sprintf('%.2fx', value);
             app.StatusLabel.Text = sprintf('Pitch regle sur %.2fx', value);
         end
-    end
+
+    end % fin methods (Access = private)
 
     methods (Access = public)
 
@@ -617,8 +648,11 @@ classdef MixeurDJApp < matlab.apps.AppBase
                 app.liveTimer = [];
             end
         end
-    end
-end
+
+    end % fin methods (Access = public)
+
+end % fin classdef
+
 
 function yout = localResampleApp(y, p, q)
     y = y(:);
@@ -636,4 +670,68 @@ function yout = localResampleApp(y, p, q)
     tTarget(end) = min(tTarget(end), tOriginal(end));
     yout = interp1(tOriginal, y, tTarget, 'linear');
     yout = yout(:);
+end
+
+function y = localReverse(x)
+    % Effet Reverse : lecture à l'envers
+    % On inverse simplement l'ordre des échantillons.
+    % Compatible mono/stéréo.
+    y = flipud(x);
+end
+
+function y = localAlien(x, Fs)
+%LOCALALIEN  Effet "Alien" : voix / son extraterrestre.
+%
+%   y = localAlien(x, Fs)
+%   x  : signal d'entrée (mono de préférence)
+%   Fs : fréquence d'échantillonnage
+%
+%   Chaîne de traitement :
+%     1) Pitch up avec PVoc (voix plus aiguë)
+%     2) Robotisation avec Rob (timbre métallique)
+%     3) Vibrato léger (instabilité de fréquence)
+%     4) Tremolo subtil (modulation d'amplitude)
+%     5) Normalisation pour éviter l'écrêtage
+
+    if nargin < 2 || isempty(x)
+        y = x;
+        return;
+    end
+
+    % Forcer mono si jamais on reçoit un signal stéréo
+    if size(x,2) > 1
+        x = mean(x, 2);
+    end
+    x = x(:);   % vecteur colonne
+
+    %% 1) Pitch up via PVoc
+    pitchFactor = 1.5;   % facteur > 1 => plus aigu
+    try
+        % Même style que dans ton app : fenêtre 1024 / hop 1024
+        y = PVoc(x, pitchFactor, 1024, 1024);
+    catch
+        % Fallback très simple si PVoc n'est pas dispo (au cas où)
+        idx = 1:pitchFactor:numel(x);
+        y = interp1(1:numel(x), x, idx, 'linear')';
+    end
+
+    %% 2) Robotisation (timbre métallique)
+    carrierFreq = 650;  % Hz
+    y = Rob(y, carrierFreq, Fs);
+
+    %% 3) Vibrato léger
+    vibRate  = 6;      % Hz
+    vibDepth = 0.004;  % petite variation de pitch
+    y = Vibrato(y, Fs, vibRate, vibDepth);
+
+    %% 4) Tremolo subtil
+    tremRate  = 5;    % Hz
+    tremDepth = 0.6;  % modulation amplitude
+    y = Tremolo(y, Fs, tremRate, tremDepth);
+
+    %% 5) Normalisation pour éviter l’écrêtage
+    maxVal = max(abs(y));
+    if maxVal > 0
+        y = y ./ maxVal * 0.98;  % un peu en dessous de 1 par sécurité
+    end
 end

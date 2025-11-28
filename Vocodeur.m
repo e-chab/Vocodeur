@@ -34,7 +34,15 @@ if ~isempty(scriptDir)
 	addpath(scriptDir);
 end
 
+
 clipLibrary = get_demo_clips(scriptDir);
+% Ajout manuel des extraits demandés
+extraFiles = {
+	struct('label','pink_floyd.wav','file','pink_floyd.wav','path',fullfile(scriptDir,'pink_floyd.wav')),
+	struct('label','evil_laugh.wav','file','evil_laugh.wav','path',fullfile(scriptDir,'evil_laugh.wav')),
+	struct('label','evil_laugh_elise.wav','file','evil_laugh_elise.wav','path',fullfile(scriptDir,'evil_laugh_elise.wav'))
+};
+clipLibrary = [clipLibrary, extraFiles{:}];
 if isempty(clipLibrary)
 	error('Aucun extrait audio disponible dans le dossier du projet.');
 end

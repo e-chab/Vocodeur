@@ -5,19 +5,15 @@ function y = Auto_wah(x, Fs, minFreq, maxFreq, Q)
 % minFreq, maxFreq : plage de balayage (Hz)
 % Q : facteur de qualité du filtre
 
-if nargin < 3, minFreq = 500; end
-if nargin < 4, maxFreq = 2500; end
+if nargin < 3, minFreq = 800; end
+if nargin < 4, maxFreq = 1800; end
 if nargin < 5, Q = 0.1; end
 
 x = x(:);
 N = length(x);
 
-% Calcul de l'enveloppe du signal (Hilbert sans toolbox si nécessaire)
-if exist('hilbert','file') == 2
-    env = abs(hilbert(x));
-else
-    env = abs(localHilbert(x));
-end
+% Calcul de l'enveloppe du signal
+env = abs(hilbert(x));
 % Normalisation de l'enveloppe entre 0 et 1
 env = (env - min(env)) / (max(env) - min(env));
 % Fréquence centrale modulée par l'enveloppe
@@ -39,20 +35,4 @@ for n = 2:N
 end
 
 y = yb / max(abs(yb));
-end
-
-function h = localHilbert(x)
-% Approximation de la transformée de Hilbert sans toolbox
-N = length(x);
-Xf = fft(x);
-H = zeros(N,1);
-if mod(N,2) == 0
-    H(1) = 1;
-    H(N/2+1) = 1;
-    H(2:N/2) = 2;
-else
-    H(1) = 1;
-    H(2:(N+1)/2) = 2;
-end
-h = ifft(Xf .* H);
 end

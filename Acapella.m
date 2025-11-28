@@ -1,48 +1,61 @@
 function y = Acapella(x, Fs)
-% Effet acapella : isole la voix en supprimant les sons non vocaux
-% Implémenté avec un passe-bande : moins sélectif qu'une suppression spectrale, mais mieux pour garder la voix naturelle sans dégrader la qualité vocale
-% x : signal d'entrée
-% Fs : fréquence d'échantillonnage
+% ACAPELLA  Effet acapella simple sans toolbox (filtrage fréquentiel)
+%   y = Acapella(x, Fs)
+%   x  : signal d'entrée (mono ou stéréo)
+%   Fs : fréquence d'échantillonnage
+%
+%   Principe :
+%     - On passe en mono (si stéréo)
+%     - On passe dans le domaine fréquentiel (FFT)
+%     - On garde uniquement une bande [f1, f2] typique de la voix
+%     - On remet à zéro le reste (musique, basses profondes, aigus)
+%     - Seuil + normalisation
 
-% Convertir en mono si nécessaire
-if size(x,2) > 1
-    x = mean(x,2);
-end
+    if nargin < 2
+        error('Acapella : il faut appeler la fonction avec (x, Fs).');
+    end
 
-% Filtre passe-bande assez étroit (500 Hz à 1000 Hz)
-[b_band, a_band] = localBandpass(500, 1000, Fs);
-x_band = filter(b_band, a_band, x);
+    % 1) Mono
+    if size(x,2) > 1
+        x = mean(x, 2);
+    end
+    x = x(:);   % vecteur colonne
 
-% Suppression des parties faibles avec seuil absolu (absolu pour que si l'audio n'a pas de voix, tout soit mis à zéro)
-seuil = 0.02; % seuil absolu
-y = x_band;
-y(abs(y) < seuil) = 0;
+    N  = numel(x);
+    Xf = fft(x);
 
-% Normalisation
-if max(abs(y)) > 0
-    y = y / max(abs(y));
-end
+    % 2) Définition de la bande vocale (à ajuster si tu veux)
+    f1 = 300;      % Hz (grave)
+    f2 = 3400;     % Hz (aigu)
 
-end
+    % Axe fréquentiel associé à la FFT "directe"
+    freqs = (0:N-1) * (Fs / N);
 
-function [b, a] = localBandpass(fLow, fHigh, Fs)
-% Second-order band-pass using RBJ audio EQ cookbook equations
-center = sqrt(fLow * fHigh);
-bandwidth = max(fHigh - fLow, eps);
-Q = center / bandwidth;
-if Q <= 0
-    Q = 0.5;
-end
-w0 = 2*pi*center/Fs;
-alpha = sin(w0)/(2*Q);
+    % 3) Masque passe-bande fréquentiel
+    mask = zeros(size(Xf));
 
-b0 = alpha;
-b1 = 0;
-b2 = -alpha;
-a0 = 1 + alpha;
-a1 = -2*cos(w0);
-a2 = 1 - alpha;
+    % Bande "directe" (0 -> Fs/2)
+    idxBandPos = (freqs >= f1) & (freqs <= f2);
 
-b = [b0/a0, b1/a0, b2/a0];
-a = [1, a1/a0, a2/a0];
+    % Symétrique pour les composantes complexes conjuguées (partie haute)
+    % Fréquences entre (Fs-f2) et (Fs-f1)
+    idxBandNeg = (freqs >= (Fs - f2)) & (freqs <= (Fs - f1));
+
+    mask(idxBandPos | idxBandNeg) = 1;
+
+    % Application du masque fréquentiel
+    Xf_filtered = Xf .* mask;
+
+    % 4) Retour au temps
+    y = real(ifft(Xf_filtered));
+
+    % 5) Seuil pour virer les zones très faibles
+    seuil = 0.02;
+    y(abs(y) < seuil) = 0;
+
+    % 6) Normalisation
+    maxVal = max(abs(y));
+    if maxVal > 0
+        y = y ./ maxVal * 0.98;
+    end
 end
